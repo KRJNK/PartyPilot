@@ -1,0 +1,80 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+
+      - name: Install API dependencies
+        run: |
+          pip install -r terraform/lambda_src/api/requirements.txt -t terraform/lambda_src/api/
+
+      - name: Configure Scaleway credentials
+        run: |
+          echo "SCW_ACCESS_KEY=${{ secrets.SCW_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "SCW_SECRET_KEY=${{ secrets.SCW_SECRET_KEY }}" >> $GITHUB_ENV
+          echo "SCW_DEFAULT_PROJECT_ID=${{ secrets.SCW_DEFAULT_PROJECT_ID }}" >> $GITHUB_ENV
+
+      - name: Configure Cloudflare credentials
+        run: |
+          echo "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: cd terraform && terraform init
+
+      - name: Terraform Apply
+        run: cd terraform && terraform apply -auto-approve -input=false
+
+      - name: Read Terraform outputs
+        id: tf
+        run: |
+          cd terraform
+          echo "admin_spa_bucket=$(terraform output -raw admin_spa_bucket_name)" >> "$GITHUB_OUTPUT"
+          echo "function_endpoint=$(terraform output -raw function_endpoint_url)" >> "$GITHUB_OUTPUT"
+
+      - name: Install Scaleway CLI
+        run: |
+          curl -o /usr/local/bin/scw https://github.com/scaleway/scaleway-cli/releases/latest/download/scw-linux-x86_64
+          chmod +x /usr/local/bin/scw
+          scw config set access-key=${{ secrets.SCW_ACCESS_KEY }} secret-key=${{ secrets.SCW_SECRET_KEY }} default-project-id=${{ secrets.SCW_DEFAULT_PROJECT_ID }} region=pl-waw-1
+
+      - name: Deploy Admin SPA to Scaleway Object Storage
+        run: |
+          scw object bucket update ${{ steps.tf.outputs.admin_spa_bucket }} s3-website-index=index.html s3-website-error=index.html || true
+          aws s3 sync frontend/admin-spa/ s3://${{ steps.tf.outputs.admin_spa_bucket }}/ \
+            --delete \
+            --endpoint-url https://s3.pl-waw.scw.cloud \
+            --region pl-waw-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}

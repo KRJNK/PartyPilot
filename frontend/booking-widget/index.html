@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeddingSaaS — Booking Widget Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f8f6f2;
+      color: #1a1a1a;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 24px 20px;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    header p {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    main {
+      flex: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 20px;
+      width: 100%;
+    }
+    section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    section h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #C9A96E;
+      display: inline-block;
+    }
+    section h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 16px 0 8px;
+      color: #444;
+    }
+    p, li {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.7;
+    }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 4px; }
+    code {
+      background: #f0ede8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    pre {
+      background: #1a1a1a;
+      color: #e0e0e0;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 8px 0;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+    .badge {
+      display: inline-block;
+      background: #C9A96E;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 6px;
+    }
+    .demo-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .demo-controls button {
+      padding: 10px 20px;
+      border: 1.5px solid #C9A96E;
+      border-radius: 8px;
+      background: #fff;
+      color: #C9A96E;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      font-family: inherit;
+    }
+    .demo-controls button:hover {
+      background: #C9A96E;
+      color: #fff;
+    }
+    .demo-links {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .demo-links a {
+      color: #C9A96E;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+    }
+    .demo-links a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #999;
+    }
+    .config-grid {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px 16px;
+      font-size: 14px;
+      margin: 12px 0;
+    }
+    .config-grid .key {
+      font-weight: 600;
+      color: #666;
+    }
+    .config-grid .default {
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WeddingSaaS Booking Widget</h1>
+    <p>Demo — embeddable booking widget dla branży weselnej</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Jak to działa</h2>
+      <p>
+        Widget dodaje pływający przycisk w prawym dolnym rogu strony.
+        Po kliknięciu otwiera się modal z 3-etapowym formularzem rezerwacji:
+      </p>
+      <ul>
+        <li><strong>Krok 1:</strong> Wybór daty z kalendarza</li>
+        <li><strong>Krok 2:</strong> Wypełnienie danych kontaktowych</li>
+        <li><strong>Krok 3:</strong> Potwierdzenie i wysłanie rezerwacji</li>
+      </ul>
+      <p style="margin-top: 12px;">
+        Kliknij przycisk <strong>📅</strong> w prawym dolnym rogu, aby przetestować.
+      </p>
+    </section>
+
+    <section>
+      <h2>Embed na swojej stronie</h2>
+      <p>Dodaj ten kod przed zamknięciem <code>&lt;/body&gt;</code>:</p>
+      <pre><code>&lt;script src="https://widget.weddingsaas.pl/widget.js"
+        data-tenant-id="TWOJ_TENANT_ID"
+        async&gt;&lt;/script&gt;</code></pre>
+
+      <h3>Opcje konfiguracji</h3>
+      <div class="config-grid">
+        <span class="key">data-tenant-id</span>
+        <span>ID Twojego tenanta</span>
+        <span class="default">wymagane</span>
+
+        <span class="key">data-api-base</span>
+        <span>URL backendu API</span>
+        <span class="default">https://api.weddingsaas.pl/api</span>
+
+        <span class="key">data-position</span>
+        <span>Pozycja przycisku</span>
+        <span class="default">bottom-right</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Demo</h2>
+      <p>
+        Ta strona ładuje widget z identyfikatorem <code>T-demo</code>.
+        Ponieważ to demo, dane z API nie zostaną załadowane — widget pokaże komunikat o błędzie,
+        co pozwala przetestować obsługę sytuacji awaryjnych.
+      </p>
+      <div class="demo-controls">
+        <button onclick="if(window.WeddingSaaSWidget) window.WeddingSaaSWidget.open()">Otwórz widget</button>
+        <button onclick="if(window.WeddingSaaSWidget) window.WeddingSaaSWidget.close()">Zamknij widget</button>
+        <button onclick="if(window.WeddingSaaSWidget) window.WeddingSaaSWidget.reset()">Resetuj</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Pliki źródłowe</h2>
+      <div class="demo-links">
+        <a href="widget.js" target="_blank">📄 widget.js</a>
+        <a href="widget.css" target="_blank">🎨 widget.css</a>
+      </div>
+      <p style="margin-top: 12px;">
+        Widget jest w pełni samodzielny — nie wymaga zewnętrznych bibliotek ani frameworków.
+        Działa na każdej stronie (WordPress, Wix, Shopify, własny HTML).
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    WeddingSaaS &copy; 2026 — Booking Widget Demo
+  </footer>
+
+  <!-- Widget embed -->
+  <script src="widget.js"
+          data-tenant-id="T-demo"
+          data-api-base="https://api.weddingsaas.pl/api"
+          async></script>
+</body>
+</html>

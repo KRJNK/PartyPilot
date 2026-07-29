@@ -1,0 +1,52 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-plan.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+
+      - name: Configure Scaleway credentials
+        run: |
+          echo "SCW_ACCESS_KEY=${{ secrets.SCW_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "SCW_SECRET_KEY=${{ secrets.SCW_SECRET_KEY }}" >> $GITHUB_ENV
+          echo "SCW_DEFAULT_PROJECT_ID=${{ secrets.SCW_DEFAULT_PROJECT_ID }}" >> $GITHUB_ENV
+
+      - name: Configure Cloudflare credentials
+        run: |
+          echo "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: cd terraform && terraform init
+
+      - name: Terraform Format Check
+        run: cd terraform && terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: cd terraform && terraform validate
+
+      - name: Terraform Plan
+        run: cd terraform && terraform plan -no-color
