@@ -1,5 +1,5 @@
 /* ============================================================
-   WeddingSaaS Chat Widget v1.0
+   PartyPilot Chat Widget v1.0
    Standalone embeddable AI chat widget — vanilla JS, no deps
    Injects its own styles, runs in IIFE to avoid global leaks
    ============================================================ */
@@ -10,7 +10,7 @@
      Config
      ------------------------------------------------------------------ */
   var CONFIG = {
-    apiBase: 'https://api.weddingsaas.pl/api',
+    apiBase: 'https://api.partypilot.pl/api',
     tenantId: '',
     position: 'bottom-right',
     maxMessageLength: 500,
@@ -241,7 +241,7 @@
   function getCSSContent() {
     /* All styles are defined in chat.css.
        Inlined here for self-contained widget embedding. */
-    return '/* WeddingSaaS Chat Widget Styles */\n' +
+    return '/* PartyPilot Chat Widget Styles */\n' +
       ':root{--wsc-primary:#C9A96E;--wsc-bg:#fff;--wsc-text:#1a1a1a;--wsc-text-secondary:#666;--wsc-bubble-bg:#f0f0f0;--wsc-input-bg:#f8f8f8;--wsc-border:#e0e0e0;--wsc-radius:12px;--wsc-radius-sm:8px;--wsc-shadow:0 8px 32px rgba(0,0,0,.15);--wsc-shadow-sm:0 2px 8px rgba(0,0,0,.08);--wsc-transition:.25s ease;--wsc-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,sans-serif;--wsc-z-index:999999}' +
       '.wsc-trigger-btn{position:fixed;z-index:var(--wsc-z-index);bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;border:none;background:var(--wsc-primary);color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;transition:transform var(--wsc-transition),box-shadow var(--wsc-transition);-webkit-tap-highlight-color:transparent;padding:0;line-height:1}' +
       '.wsc-trigger-btn:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(0,0,0,.25)}' +
@@ -763,7 +763,7 @@
      Expose API
      ------------------------------------------------------------------ */
   function exposeAPI() {
-    window.WeddingSaaSChat = {
+    window.PartyPilotChat = {
       open: openChat,
       close: closeChat,
       toggle: toggleChat,
@@ -779,7 +779,7 @@
     getScriptData();
 
     if (!CONFIG.tenantId) {
-      console.warn('[WeddingSaaS Chat] Brak atrybutu data-tenant-id. Widget nie został uruchomiony.');
+      console.warn('[PartyPilot Chat] Brak atrybutu data-tenant-id. Widget nie został uruchomiony.');
       return;
     }
 

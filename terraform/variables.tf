@@ -1,19 +1,26 @@
 variable "domain_name" {
   description = "Root domain for the platform"
   type        = string
-  default     = "weddingsaas.pl"
+  default     = "partypilot.pl"
 }
 
 variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID for the domain"
+  description = "Cloudflare zone ID for the domain (leave empty to skip Cloudflare resources)"
   type        = string
   default     = ""
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token (leave default to skip Cloudflare resources)"
+  type        = string
+  sensitive   = true
+  default     = "0000000000000000000000000000000000000000"
 }
 
 variable "db_instance_name" {
   description = "Scaleway Managed PostgreSQL instance name"
   type        = string
-  default     = "wedding-saas-db"
+  default     = "partypilot-db"
 }
 
 variable "db_node_type" {
@@ -25,7 +32,7 @@ variable "db_node_type" {
 variable "db_username" {
   description = "PostgreSQL admin username"
   type        = string
-  default     = "wedding_saas"
+  default     = "partypilot"
 }
 
 variable "db_password" {
@@ -55,6 +62,26 @@ variable "smtp_password" {
   default     = ""
 }
 
+variable "mistral_api_key" {
+  description = "Mistral AI API key for chat assistant"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "scw_access_key" {
+  description = "Scaleway access key (for S3 sync operations)"
+  type        = string
+  default     = ""
+}
+
+variable "scw_secret_key" {
+  description = "Scaleway secret key (for S3 sync operations)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "allowed_origins" {
   description = "CORS allowed origins (comma-separated or *)"
   type        = string
@@ -69,7 +96,7 @@ variable "common_tags" {
     Owner       = string
   })
   default = {
-    Project     = "Wedding SaaS"
+    Project     = "PartyPilot"
     Environment = "Production"
     Owner       = "KRJNK"
   }

@@ -9,6 +9,5 @@ provider "scaleway" {
 }
 
 provider "cloudflare" {
-  # Configured via environment variable:
-  #   CLOUDFLARE_API_TOKEN
+  api_token = var.cloudflare_api_token
 }

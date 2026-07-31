@@ -8,7 +8,7 @@ biznesu, który po kliknięciu otwiera 3-etapowy formularz rezerwacji online.
 Dodaj ten kod na swojej stronie (przed zamknięciem `</body>`):
 
 ```html
-<script src="https://widget.weddingsaas.pl/widget.js"
+<script src="https://widget.partypilot.pl/widget.js"
         data-tenant-id="TWOJ_TENANT_ID"
         async></script>
 ```
@@ -21,7 +21,7 @@ modal z formularzem rezerwacji.
 | Atrybut | Opis | Domyślnie |
 |---------|------|-----------|
 | `data-tenant-id` | Twój ID tenanta **(wymagane)** | — |
-| `data-api-base` | URL API backendu | `https://api.weddingsaas.pl/api` |
+| `data-api-base` | URL API backendu | `https://api.partypilot.pl/api` |
 | `data-position` | Pozycja przycisku (`bottom-right` / `bottom-left`) | `bottom-right` |
 
 ## Dostosowywanie
@@ -60,17 +60,17 @@ Widget korzysta z następujących publicznych endpointów API:
 
 ## Zaawansowane
 
-Widget eksportuje obiekt `window.WeddingSaaSWidget` z metodami:
+Widget eksportuje obiekt `window.PartyPilotWidget` z metodami:
 
 ```js
 // Otwórz widget
-window.WeddingSaaSWidget.open();
+window.PartyPilotWidget.open();
 
 // Zamknij widget
-window.WeddingSaaSWidget.close();
+window.PartyPilotWidget.close();
 
 // Resetuj do kroku 1
-window.WeddingSaaSWidget.reset();
+window.PartyPilotWidget.reset();
 ```
 
 ## Rozwój

@@ -1,5 +1,5 @@
 """
-Scaleway Serverless Function — główny router Wedding SaaS API.
+Scaleway Serverless Function — główny router PartyPilot API.
 
 Handler: main.handler (format Scaleway: module.handler)
 
@@ -62,6 +62,23 @@ ADMIN_CLIENTS_RE = re.compile(r"^/api/admin/clients(?:/export)?$")
 ADMIN_AI_CONFIG_RE = re.compile(r"^/api/admin/ai-config$")
 ADMIN_CONVERSATIONS_RE = re.compile(
     r"^/api/admin/conversations(?:/([^/]+))?(?:/([^/]+))?$"
+)
+
+# ── Booking Assignments ──
+# Pattern: /api/admin/bookings/{booking_id}/assignments[/{user_id}]
+ADMIN_BOOKINGS_ASSIGNMENTS_RE = re.compile(
+    r"^/api/admin/bookings/([^/]+)/assignments(?:/([^/]+))?$"
+)
+
+# ── Booking Files ──
+# Pattern: /api/admin/bookings/{booking_id}/files[/{file_id}]
+ADMIN_BOOKINGS_FILES_RE = re.compile(
+    r"^/api/admin/bookings/([^/]+)/files(?:/([^/]+))?$"
+)
+
+# ── Users ──
+ADMIN_USERS_RE = re.compile(
+    r"^/api/admin/users(?:/([^/]+))?(?:/(location))?$"
 )
 
 
@@ -176,6 +193,104 @@ def _route(event, context):
 
         if path == "/api/admin/clients" and method == "GET":
             return _require_cors(handle_clients(tenant_id, event), cors)
+
+        return _require_cors(_response(404, {"error": "Not found"}), cors)
+
+    # ── Booking Assignments ───────────────────────────────
+    m_asgn = ADMIN_BOOKINGS_ASSIGNMENTS_RE.match(path)
+    if m_asgn:
+        booking_id = m_asgn.group(1)
+        assignment_user_id = m_asgn.group(2)
+
+        from assignments import (
+            handle_list_assignments,
+            handle_create_assignment,
+            handle_delete_assignment,
+            handle_update_assignment,
+        )
+
+        # GET  /api/admin/bookings/{id}/assignments
+        if not assignment_user_id and method == "GET":
+            return _require_cors(
+                handle_list_assignments(tenant_id, booking_id), cors
+            )
+        # POST /api/admin/bookings/{id}/assignments
+        if not assignment_user_id and method == "POST":
+            return _require_cors(
+                handle_create_assignment(tenant_id, booking_id, event), cors
+            )
+        # DELETE /api/admin/bookings/{id}/assignments/{user_id}
+        if assignment_user_id and method == "DELETE":
+            return _require_cors(
+                handle_delete_assignment(tenant_id, booking_id, assignment_user_id), cors
+            )
+        # PUT /api/admin/bookings/{id}/assignments/{user_id}
+        if assignment_user_id and method == "PUT":
+            return _require_cors(
+                handle_update_assignment(tenant_id, booking_id, assignment_user_id, event), cors
+            )
+
+        return _require_cors(_response(404, {"error": "Not found"}), cors)
+
+    # ── Booking Files ─────────────────────────────────────
+    m_files = ADMIN_BOOKINGS_FILES_RE.match(path)
+    if m_files:
+        booking_id = m_files.group(1)
+        file_id = m_files.group(2)
+
+        from files import handle_list_files, handle_create_file, handle_delete_file
+
+        # GET  /api/admin/bookings/{id}/files
+        if not file_id and method == "GET":
+            return _require_cors(
+                handle_list_files(tenant_id, booking_id), cors
+            )
+        # POST /api/admin/bookings/{id}/files
+        if not file_id and method == "POST":
+            return _require_cors(
+                handle_create_file(tenant_id, booking_id, event, user_info), cors
+            )
+        # DELETE /api/admin/bookings/{id}/files/{file_id}
+        if file_id and method == "DELETE":
+            return _require_cors(
+                handle_delete_file(tenant_id, booking_id, file_id), cors
+            )
+
+        return _require_cors(_response(404, {"error": "Not found"}), cors)
+
+    # ── Users ─────────────────────────────────────────────
+    m_users = ADMIN_USERS_RE.match(path)
+    if m_users:
+        user_id_param = m_users.group(1)
+        user_action = m_users.group(2)
+
+        from users import (
+            handle_list_users, handle_create_user,
+            handle_update_user, handle_delete_user,
+            handle_update_location,
+        )
+
+        # GET  /api/admin/users
+        if not user_id_param and not user_action and method == "GET":
+            return _require_cors(handle_list_users(tenant_id), cors)
+        # POST /api/admin/users
+        if not user_id_param and not user_action and method == "POST":
+            return _require_cors(handle_create_user(tenant_id, event), cors)
+        # DELETE /api/admin/users/{user_id}
+        if user_id_param and not user_action and method == "DELETE":
+            return _require_cors(
+                handle_delete_user(tenant_id, user_id_param, user_info.get("sub")), cors
+            )
+        # PUT /api/admin/users/{user_id}/location
+        if user_id_param and user_action == "location" and method == "PUT":
+            return _require_cors(
+                handle_update_location(tenant_id, user_id_param, event), cors
+            )
+        # PUT /api/admin/users/{user_id}
+        if user_id_param and not user_action and method == "PUT":
+            return _require_cors(
+                handle_update_user(tenant_id, user_id_param, event), cors
+            )
 
         return _require_cors(_response(404, {"error": "Not found"}), cors)
 

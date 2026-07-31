@@ -10,7 +10,6 @@ import logging
 import os
 from datetime import datetime, timezone
 
-import boto3
 from fpdf import FPDF
 
 from db import query, execute
@@ -19,7 +18,7 @@ from db import query, execute
 
 SCW_REGION = os.environ.get("SCW_REGION", "pl-waw-1")
 SCW_ENDPOINT = f"https://s3.{SCW_REGION}.scw.cloud"
-STORAGE_BUCKET = os.environ.get("STORAGE_BUCKET", "wedding-saas-storage")
+STORAGE_BUCKET = os.environ.get("STORAGE_BUCKET", "partypilot-storage")
 
 _s3_client = None
 
@@ -27,12 +26,34 @@ _s3_client = None
 def _get_s3():
     global _s3_client
     if _s3_client is None:
+        import boto3
         _s3_client = boto3.client(
             "s3",
             endpoint_url=SCW_ENDPOINT,
             region_name=SCW_REGION,
         )
     return _s3_client
+
+
+# ── Polish character transliteration ────────────────────────────
+
+_PL_TRANS = str.maketrans({
+    "ą": "a", "ć": "c", "ę": "e", "ł": "l", "ń": "n",
+    "ó": "o", "ś": "s", "ź": "z", "ż": "z",
+    "Ą": "A", "Ć": "C", "Ę": "E", "Ł": "L", "Ń": "N",
+    "Ó": "O", "Ś": "S", "Ź": "Z", "Ż": "Z",
+    "–": "-", "—": "-", "\u201a": ",", "\u201e": ",",
+    "\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'",
+    "\u2026": "...", "«": "<<", "»": ">>",
+    "\u00a0": " ", "\u2022": "*", "\u00a9": "(c)",
+})
+
+
+def _ascii(text):
+    """Transliterate Polish characters to ASCII for built-in PDF fonts."""
+    if not text:
+        return ""
+    return str(text).translate(_PL_TRANS)
 
 
 # ── PDF Generator ───────────────────────────────────────────────
@@ -42,36 +63,36 @@ class ContractPDF(FPDF):
     """PDF z header/footer dla Umowy o Wykonanie Dzieła."""
 
     def header(self):
-        self.set_font("DejaVu", "B", 14)
+        self.set_font("helvetica", "B", 14)
         self.set_text_color(60, 60, 60)
-        self.cell(0, 10, "Umowa o Wykonanie Dzieła", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 10, _ascii("Umowa o Wykonanie Dzieła"), align="C", new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(180, 180, 180)
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(5)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font("DejaVu", "", 8)
+        self.set_font("helvetica", "", 8)
         self.set_text_color(128, 128, 128)
         self.cell(0, 10, f"Strona {self.page_no()}/{{nb}}", align="C")
 
     def section_title(self, title):
-        self.set_font("DejaVu", "B", 11)
+        self.set_font("helvetica", "B", 11)
         self.set_text_color(40, 40, 40)
-        self.cell(0, 8, title, new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 8, _ascii(title), new_x="LMARGIN", new_y="NEXT")
         self.ln(1)
 
     def body_text(self, text):
-        self.set_font("DejaVu", "", 9)
+        self.set_font("helvetica", "", 9)
         self.set_text_color(50, 50, 50)
-        self.multi_cell(0, 5, text)
+        self.multi_cell(0, 5, _ascii(text))
         self.ln(2)
 
     def field_line(self, label, value=""):
-        self.set_font("DejaVu", "", 9)
+        self.set_font("helvetica", "", 9)
         self.set_text_color(50, 50, 50)
         underline = "__" * 30 if not value else ""
-        self.cell(0, 7, f"{label}: {value or underline}", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 7, _ascii(f"{label}: {value or underline}"), new_x="LMARGIN", new_y="NEXT")
 
 
 def generate_contract_pdf(booking, tenant, package):
@@ -110,9 +131,9 @@ def generate_contract_pdf(booking, tenant, package):
     pdf.add_page()
 
     # ── Tytuł ──
-    pdf.set_font("DejaVu", "B", 16)
+    pdf.set_font("helvetica", "B", 16)
     pdf.set_text_color(30, 30, 30)
-    pdf.cell(0, 10, "UMOWA O WYKONANIE DZIEŁA", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, _ascii("UMOWA O WYKONANIE DZIEŁA"), align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     # ── Preambuła ──
@@ -222,10 +243,10 @@ def generate_contract_pdf(booking, tenant, package):
     pdf.ln(8)
 
     # ── Podpisy ──
-    pdf.set_font("DejaVu", "", 10)
-    pdf.cell(90, 7, "Zamawiający (podpis):", new_x="RIGHT", new_y="LAST")
+    pdf.set_font("helvetica", "", 10)
+    pdf.cell(90, 7, _ascii("Zamawiający (podpis):"), new_x="RIGHT", new_y="LAST")
     pdf.cell(10, 7, "", new_x="RIGHT", new_y="LAST")
-    pdf.cell(90, 7, "Wykonawca (podpis):", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(90, 7, _ascii("Wykonawca (podpis):"), new_x="LMARGIN", new_y="NEXT")
     pdf.ln(15)
     pdf.cell(90, 5, "___________________________", new_x="RIGHT", new_y="LAST")
     pdf.cell(10, 5, "", new_x="RIGHT", new_y="LAST")
@@ -240,14 +261,25 @@ def generate_contract_pdf(booking, tenant, package):
 def _upload_to_s3(pdf_bytes, tenant_id, booking_id):
     """
     Przesyła PDF do Scaleway Object Storage.
+    Fallback: zapisuje lokalnie jeśli S3 nie jest skonfigurowane.
 
     Returns:
-        Public URL pliku PDF.
+        Public URL lub local path pliku PDF.
     """
     key = f"contracts/{tenant_id}/{booking_id}.pdf"
-    s3 = _get_s3()
+
+    # Fallback: local file storage (dev mode)
+    if not STORAGE_BUCKET:
+        local_dir = f"/tmp/partypilot-contracts/{tenant_id}"
+        os.makedirs(local_dir, exist_ok=True)
+        local_path = f"{local_dir}/{booking_id}.pdf"
+        with open(local_path, "wb") as f:
+            f.write(pdf_bytes)
+        logging.info("PDF saved locally: %s", local_path)
+        return local_path
 
     try:
+        s3 = _get_s3()
         s3.put_object(
             Bucket=STORAGE_BUCKET,
             Key=key,
@@ -258,8 +290,13 @@ def _upload_to_s3(pdf_bytes, tenant_id, booking_id):
         logging.info("PDF uploaded to S3: %s", url)
         return url
     except Exception as e:
-        logging.error("Failed to upload PDF to S3: %s", e)
-        raise
+        logging.error("Failed to upload PDF to S3: %s, saving locally", e)
+        local_dir = f"/tmp/partypilot-contracts/{tenant_id}"
+        os.makedirs(local_dir, exist_ok=True)
+        local_path = f"{local_dir}/{booking_id}.pdf"
+        with open(local_path, "wb") as f:
+            f.write(pdf_bytes)
+        return local_path
 
 
 # ── Handlery ────────────────────────────────────────────────────
@@ -327,7 +364,7 @@ def handle_generate_contract(tenant_id, booking_id, event):
 
     # 7. Send email to client
     try:
-        from email import send_contract_email
+        from mailer import send_contract_email
         send_contract_email(tenant, booking, contract_url)
     except Exception as e:
         logging.warning("Failed to send contract email: %s", e)

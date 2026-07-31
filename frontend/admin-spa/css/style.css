@@ -1,4 +1,4 @@
-/* ── Wedding SaaS Admin SPA — Styles ────────────────────────── */
+/* ── PartyPilot Admin SPA — Styles ────────────────────────── */
 :root {
   --primary: #c9a96e;
   --primary-hover: #b8954a;
@@ -1601,6 +1601,115 @@ tbody tr:hover { background: rgba(128, 128, 128, 0.03); }
   .chat-message {
     max-width: 90%;
   }
+}
+
+/* ── Assignments Section ────────────────────────────────────── */
+.assignments-section .assignment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.06);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.assignments-section .assignment-row:last-child {
+  border-bottom: none;
+}
+
+.assignments-section .assignment-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.assignments-section .assignment-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.assignments-section .assignment-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.assignments-section .assignment-location,
+.assignments-section .assignment-coords {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.assignments-section .assignment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.assignments-section .assignment-checkin {
+  white-space: nowrap;
+}
+
+.badge-role {
+  background: rgba(155, 89, 182, 0.15);
+  color: #9b59b6;
+}
+
+/* ── Files Section ──────────────────────────────────────────── */
+.files-section .files-table {
+  font-size: 0.85rem;
+}
+
+.files-section .files-table td {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+}
+
+.files-section .files-table .file-icon {
+  margin-right: 0.35rem;
+  font-size: 1rem;
+}
+
+.files-section .files-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.badge-file-category {
+  background: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+}
+
+/* ── File Upload Form ───────────────────────────────────────── */
+.file-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.file-upload-form .form-row {
+  margin-bottom: 0;
+}
+
+/* ── Team Table ─────────────────────────────────────────────── */
+.team-table td {
+  vertical-align: middle;
+}
+
+.team-table .team-location-cell {
+  font-size: 0.85rem;
+  color: var(--text);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.team-table .team-actions-cell {
+  white-space: nowrap;
+  text-align: right;
 }
 
 /* ── Responsive ───────────────────────────────────────────── */

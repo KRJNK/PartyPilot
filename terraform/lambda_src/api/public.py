@@ -108,14 +108,14 @@ def _send_auto_reply(tenant, create_result):
     # Wyślij potwierdzenie do klienta
     if booking.get("client_email"):
         try:
-            from email import send_booking_confirmation
+            from mailer import send_booking_confirmation
             send_booking_confirmation(tenant, booking_with_pkg)
         except Exception as e:
             logging.error("Failed to send confirmation email: %s", e)
 
     # Wyślij powiadomienie do organizatora
     try:
-        from email import send_booking_notification
+        from mailer import send_booking_notification
         send_booking_notification(tenant, booking_with_pkg)
     except Exception as e:
         logging.error("Failed to send notification email: %s", e)

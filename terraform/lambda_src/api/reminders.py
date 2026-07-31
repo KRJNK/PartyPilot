@@ -88,7 +88,7 @@ def _send_reminder_email(booking):
     Args:
         booking: dict z bookings + tenant info (company_name, primary_color, logo_url)
     """
-    from email import send_email
+    from mailer import send_email
 
     client_name = booking.get("client_name", "")
     client_email = booking.get("client_email", "")
@@ -138,7 +138,7 @@ def _send_reminder_email(booking):
     """
 
     # Użyj base template z email.py
-    from email import _build_base_html
+    from mailer import _build_base_html
     html = _build_base_html(content_html, {
         "primary_color": primary_color,
         "company_name": company_name,

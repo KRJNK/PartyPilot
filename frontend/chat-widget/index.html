@@ -113,7 +113,7 @@
 <body>
   <div class="container">
     <h1>💬 Chat Widget — Demo</h1>
-    <p class="subtitle">Widget czatu AI dla platformy Wedding SaaS</p>
+    <p class="subtitle">Widget czatu AI dla platformy PartyPilot</p>
 
     <div class="demo-note">
       <strong>ℹ️ Widget jest już załadowany.</strong>
@@ -149,7 +149,7 @@
     <div class="card">
       <h2>Kod do osadzenia</h2>
       <p>Skopiuj ten kod na swoją stronę:</p>
-      <pre>&lt;script src="https://widget.weddingsaas.pl/chat.js"
+      <pre>&lt;script src="https://widget.partypilot.pl/chat.js"
         data-tenant-id="TWOJ_TENANT_ID"
         async&gt;&lt;/script&gt;</pre>
 
@@ -171,7 +171,7 @@
           <tr>
             <td><code>data-api-base</code></td>
             <td>URL API</td>
-            <td><code>https://api.weddingsaas.pl/api</code></td>
+            <td><code>https://api.partypilot.pl/api</code></td>
           </tr>
           <tr>
             <td><code>data-position</code></td>
@@ -184,31 +184,31 @@
 
     <div class="card">
       <h2>API JavaScript</h2>
-      <p>Widget udostępnia globalny obiekt <code>window.WeddingSaaSChat</code>:</p>
+      <p>Widget udostępnia globalny obiekt <code>window.PartyPilotChat</code>:</p>
       <pre>// Otwórz panel czatu
-WeddingSaaSChat.open();
+PartyPilotChat.open();
 
 // Zamknij panel czatu
-WeddingSaaSChat.close();
+PartyPilotChat.close();
 
 // Przełącz panel
-WeddingSaaSChat.toggle();
+PartyPilotChat.toggle();
 
 // Wyślij wiadomość programowo
-WeddingSaaSChat.send("Jakie macie pakiety?");</pre>
+PartyPilotChat.send("Jakie macie pakiety?");</pre>
     </div>
 
     <hr />
 
     <div class="footer">
-      Wedding SaaS Chat Widget v1.0 &mdash; <a href="#" onclick="WeddingSaaSChat.open();return false;">Otwórz czat</a>
+      PartyPilot Chat Widget v1.0 &mdash; <a href="#" onclick="PartyPilotChat.open();return false;">Otwórz czat</a>
     </div>
   </div>
 
   <!-- ===== CHAT WIDGET ===== -->
   <script src="chat.js"
           data-tenant-id="T-demo"
-          data-api-base="https://api.weddingsaas.pl/api"
+          data-api-base="https://api.partypilot.pl/api"
           async></script>
 </body>
 </html>

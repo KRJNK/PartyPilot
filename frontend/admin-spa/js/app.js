@@ -1,4 +1,4 @@
-/* ── Wedding SaaS Admin SPA — Main App ────────────────────── */
+/* ── PartyPilot Admin SPA — Main App ────────────────────── */
 
 import * as auth from './auth.js';
 import api from './api.js';
@@ -13,6 +13,7 @@ import { renderClients } from './views/clients.js';
 import { renderAIConfig } from './views/ai-config.js';
 import { renderConversations } from './views/conversations.js';
 import { renderConversationDetail } from './views/conversation-detail.js';
+import { renderTeam } from './views/team.js';
 
 /* ── State ────────────────────────────────────────────────── */
 const state = {
@@ -124,6 +125,7 @@ function renderView(viewName, ...params) {
     calendar: () => renderCalendar(app),
     pipeline: () => renderPipeline(app),
     clients: () => renderClients(app),
+    team: () => renderTeam(app),
     settings: () => renderSettings(app),
     'ai-config': () => renderAIConfig(app),
     conversations: () => renderConversations(app, state.currentQuery),
@@ -163,7 +165,7 @@ function init() {
   const shellHtml = `
 <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo">Wedding SaaS</div>
+  <div class="sidebar-logo">PartyPilot</div>
   <div class="sidebar-sub">Panel administracyjny</div>
   <nav class="sidebar-nav">
     <a href="#dashboard" data-nav="dashboard"><span class="nav-icon">&#9783;</span> Dashboard</a>
@@ -173,6 +175,7 @@ function init() {
     <a href="#clients" data-nav="clients"><span class="nav-icon">&#128101;</span> Klienci</a>
     <a href="#ai-config" data-nav="ai-config"><span class="nav-icon">&#129302;</span> AI Asystent</a>
     <a href="#conversations" data-nav="conversations"><span class="nav-icon">&#128172;</span> Rozmowy</a>
+    <a href="#team" data-nav="team"><span class="nav-icon">&#128101;</span> Zespół</a>
     <a href="#settings" data-nav="settings"><span class="nav-icon">&#9881;</span> Ustawienia</a>
   </nav>
   <div class="sidebar-footer">
@@ -207,6 +210,7 @@ function init() {
   route('ai-config', () => renderView('ai-config'));
   route('conversations', () => renderView('conversations'));
   route('conversations/:id', (id) => renderView('conversation-detail', id));
+  route('team', () => renderView('team'));
   route('settings', () => renderView('settings'));
 
   // Listen for hash changes

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WeddingSaaS — Booking Widget Demo</title>
+  <title>PartyPilot — Booking Widget Demo</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -162,7 +162,7 @@
 </head>
 <body>
   <header>
-    <h1>WeddingSaaS Booking Widget</h1>
+    <h1>PartyPilot Booking Widget</h1>
     <p>Demo — embeddable booking widget dla branży weselnej</p>
   </header>
 
@@ -186,7 +186,7 @@
     <section>
       <h2>Embed na swojej stronie</h2>
       <p>Dodaj ten kod przed zamknięciem <code>&lt;/body&gt;</code>:</p>
-      <pre><code>&lt;script src="https://widget.weddingsaas.pl/widget.js"
+      <pre><code>&lt;script src="https://widget.partypilot.pl/widget.js"
         data-tenant-id="TWOJ_TENANT_ID"
         async&gt;&lt;/script&gt;</code></pre>
 
@@ -198,7 +198,7 @@
 
         <span class="key">data-api-base</span>
         <span>URL backendu API</span>
-        <span class="default">https://api.weddingsaas.pl/api</span>
+        <span class="default">https://api.partypilot.pl/api</span>
 
         <span class="key">data-position</span>
         <span>Pozycja przycisku</span>
@@ -214,9 +214,9 @@
         co pozwala przetestować obsługę sytuacji awaryjnych.
       </p>
       <div class="demo-controls">
-        <button onclick="if(window.WeddingSaaSWidget) window.WeddingSaaSWidget.open()">Otwórz widget</button>
-        <button onclick="if(window.WeddingSaaSWidget) window.WeddingSaaSWidget.close()">Zamknij widget</button>
-        <button onclick="if(window.WeddingSaaSWidget) window.WeddingSaaSWidget.reset()">Resetuj</button>
+        <button onclick="if(window.PartyPilotWidget) window.PartyPilotWidget.open()">Otwórz widget</button>
+        <button onclick="if(window.PartyPilotWidget) window.PartyPilotWidget.close()">Zamknij widget</button>
+        <button onclick="if(window.PartyPilotWidget) window.PartyPilotWidget.reset()">Resetuj</button>
       </div>
     </section>
 
@@ -234,13 +234,13 @@
   </main>
 
   <footer>
-    WeddingSaaS &copy; 2026 — Booking Widget Demo
+    PartyPilot &copy; 2026 — Booking Widget Demo
   </footer>
 
   <!-- Widget embed -->
   <script src="widget.js"
           data-tenant-id="T-demo"
-          data-api-base="https://api.weddingsaas.pl/api"
+          data-api-base="https://api.partypilot.pl/api"
           async></script>
 </body>
 </html>

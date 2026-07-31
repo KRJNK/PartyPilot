@@ -46,7 +46,7 @@ def handle_create(tenant_id, event, source="admin"):
     conn = None
     try:
         conn = get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         cur.execute(
             """INSERT INTO bookings (

@@ -1,4 +1,4 @@
-# Data Contract — Wedding SaaS (Scaleway)
+# Data Contract — PartyPilot (Scaleway)
 
 Wspólny punkt odniesienia dla Terraform, API i Frontend SPA.
 
@@ -273,7 +273,7 @@ SMTP_PORT=587
 SMTP_USER=<tem-username>
 SMTP_PASS=<tem-password>
 ALLOWED_ORIGINS=*
-STORAGE_BUCKET=wedding-saas-storage
+STORAGE_BUCKET=partypilot-storage
 SCW_REGION=pl-waw-1
 ```
 
@@ -281,10 +281,10 @@ SCW_REGION=pl-waw-1
 
 | Service | Resource | Region |
 |---------|----------|--------|
-| Serverless Functions | `wedding-saas-api` | pl-waw-1 |
-| Managed PostgreSQL | `wedding-saas-db` (DB-DEV-S, 2GB RAM) | pl-waw-1 |
-| Object Storage | `wedding-saas-storage` | pl-waw-1 |
-| Transactional Email | `wedding-saas-tem` | pl-waw-1 |
+| Serverless Functions | `partypilot-api` | pl-waw-1 |
+| Managed PostgreSQL | `partypilot-db` (DB-DEV-S, 2GB RAM) | pl-waw-1 |
+| Object Storage | `partypilot-storage` | pl-waw-1 |
+| Transactional Email | `partypilot-tem` | pl-waw-1 |
 | CDN/DNS | Cloudflare (external) | global |
 
 ## Cost Estimate

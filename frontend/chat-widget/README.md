@@ -1,6 +1,6 @@
 # Chat Widget — AI Asystent
 
-Samodzielny widget czatu AI dla platformy Wedding SaaS. Osadzany na stronie
+Samodzielny widget czatu AI dla platformy PartyPilot. Osadzany na stronie
 sprzedawcy/usługodawcy — pływający bąbelek czatu, który pozwala parom młodym
 rozmawiać z asystentem AI.
 
@@ -9,7 +9,7 @@ rozmawiać z asystentem AI.
 Dodaj ten kod na swojej stronie:
 
 ```html
-<script src="https://widget.weddingsaas.pl/chat.js"
+<script src="https://widget.partypilot.pl/chat.js"
         data-tenant-id="TWOJ_TENANT_ID"
         async></script>
 ```
@@ -19,7 +19,7 @@ Dodaj ten kod na swojej stronie:
 | Atrybut | Opis | Domyślnie |
 |---------|------|-----------|
 | `data-tenant-id` | Twój ID tenanta (wymagane) | — |
-| `data-api-base` | URL API | `https://api.weddingsaas.pl/api` |
+| `data-api-base` | URL API | `https://api.partypilot.pl/api` |
 | `data-position` | Pozycja przycisku | `bottom-right` |
 
 ## Wymagania
@@ -43,20 +43,20 @@ Dodaj ten kod na swojej stronie:
 
 ## API JavaScript
 
-Widget udostępnia globalny obiekt `window.WeddingSaaSChat`:
+Widget udostępnia globalny obiekt `window.PartyPilotChat`:
 
 ```js
 // Otwórz panel czatu
-WeddingSaaSChat.open();
+PartyPilotChat.open();
 
 // Zamknij panel czatu
-WeddingSaaSChat.close();
+PartyPilotChat.close();
 
 // Przełącz panel
-WeddingSaaSChat.toggle();
+PartyPilotChat.toggle();
 
 // Wyślij wiadomość programowo
-WeddingSaaSChat.send("Jakie macie pakiety?");
+PartyPilotChat.send("Jakie macie pakiety?");
 ```
 
 ## Kolorystyka
@@ -103,4 +103,4 @@ chat-widget/
 
 ## Licencja
 
-Wedding SaaS — wewnętrzny komponent platformy.
+PartyPilot — wewnętrzny komponent platformy.

@@ -17,7 +17,7 @@
 # the console under Billing → Budgets.
 #
 # resource "scaleway_budget_alert" "monthly" {
-#   name        = "wedding-saas-monthly-budget"
+#   name        = "partypilot-monthly-budget"
 #   limit       = 100
 #   threshold   = 80
 #   emails      = ["admin@${var.domain_name}"]
@@ -39,7 +39,7 @@ resource "null_resource" "budget_alert_note" {
 # the Cockpit API supports programmatic alert rules.
 #
 # resource "scaleway_cockpit_alert" "function_errors" {
-#   name   = "wedding-saas-api-errors"
+#   name   = "partypilot-api-errors"
 #   period = "5m"
 #   condition {
 #     metric    = "scw_function_error_count"

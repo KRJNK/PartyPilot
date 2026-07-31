@@ -7,6 +7,8 @@ Pola JSONB (features) są obsługiwane natywnie przez psycopg2.
 
 import json
 
+from psycopg2.extras import Json
+
 from db import get_connection, return_connection, query, execute, serialize, next_id
 
 
@@ -58,7 +60,7 @@ def handle_create(tenant_id, event):
                 pkg_id, tenant_id, name,
                 float(body.get("price", 0)),
                 body.get("duration", ""),
-                features,
+                Json(features),
                 body.get("deposit_type", "fixed"),
                 float(body.get("deposit_amount", 0)),
                 int(body.get("sort_order", 0)),
@@ -102,11 +104,13 @@ def handle_update(tenant_id, pkg_id, event):
                     val = int(val)
                 except (ValueError, TypeError):
                     val = 0
-            if field == "features" and isinstance(val, str):
-                try:
-                    val = json.loads(val)
-                except (json.JSONDecodeError, TypeError):
-                    val = []
+            if field == "features":
+                if isinstance(val, str):
+                    try:
+                        val = json.loads(val)
+                    except (json.JSONDecodeError, TypeError):
+                        val = []
+                val = Json(val)
             values.append(val)
 
     if not set_clauses:

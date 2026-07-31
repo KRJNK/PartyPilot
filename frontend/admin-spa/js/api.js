@@ -6,7 +6,7 @@ import * as auth from './auth.js';
  * Config — will be injected during deployment.
  * Hardcoded defaults for local development.
  */
-const API_BASE = 'https://api.weddingsaas.pl/api';
+const API_BASE = 'http://localhost:8000/api';
 
 /**
  * Generic fetch wrapper.
@@ -198,6 +198,60 @@ const api = {
 
   closeConversation(id) {
     return apiCall('POST', 'admin/conversations/' + encodeURIComponent(id) + '/close');
+  },
+
+  // Users (staff management)
+  listUsers() {
+    return apiCall('GET', 'admin/users');
+  },
+  createUser(data) {
+    return apiCall('POST', 'admin/users', data);
+  },
+  updateUser(userId, data) {
+    return apiCall('PUT', 'admin/users/' + encodeURIComponent(userId), data);
+  },
+  deleteUser(userId) {
+    return apiCall('DELETE', 'admin/users/' + encodeURIComponent(userId));
+  },
+  updateUserLocation(userId, data) {
+    return apiCall('PUT', 'admin/users/' + encodeURIComponent(userId) + '/location', data);
+  },
+
+  // Booking Assignments
+  listAssignments(bookingId) {
+    return apiCall('GET', 'admin/bookings/' + encodeURIComponent(bookingId) + '/assignments');
+  },
+  createAssignment(bookingId, data) {
+    return apiCall('POST', 'admin/bookings/' + encodeURIComponent(bookingId) + '/assignments', data);
+  },
+  updateAssignment(bookingId, userId, data) {
+    return apiCall('PUT', 'admin/bookings/' + encodeURIComponent(bookingId) + '/assignments/' + encodeURIComponent(userId), data);
+  },
+  deleteAssignment(bookingId, userId) {
+    return apiCall('DELETE', 'admin/bookings/' + encodeURIComponent(bookingId) + '/assignments/' + encodeURIComponent(userId));
+  },
+
+  // Booking Files
+  listFiles(bookingId) {
+    return apiCall('GET', 'admin/bookings/' + encodeURIComponent(bookingId) + '/files');
+  },
+  uploadFile(bookingId, formData) {
+    // This is a special case — multipart upload, not JSON
+    const url = API_BASE.replace(/\/+$/, '') + '/admin/bookings/' + encodeURIComponent(bookingId) + '/files';
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + auth.getToken(),
+      },
+      body: formData, // FormData object, browser sets Content-Type
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Upload failed');
+      return data;
+    });
+  },
+  deleteFile(bookingId, fileId) {
+    return apiCall('DELETE', 'admin/bookings/' + encodeURIComponent(bookingId) + '/files/' + encodeURIComponent(fileId));
   },
 
   // Tenant

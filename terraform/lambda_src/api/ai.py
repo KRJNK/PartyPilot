@@ -605,7 +605,7 @@ def _send_escalation(tenant, ai_config, conversation_id,
         return
 
     try:
-        from email import send_lead_escalation
+        from mailer import send_lead_escalation
 
         send_lead_escalation(
             tenant_info=tenant,

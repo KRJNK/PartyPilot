@@ -4,7 +4,7 @@
  * Config — will be injected during deployment.
  * Hardcoded defaults for local development.
  */
-const API_BASE = 'https://api.weddingsaas.pl/api';
+const API_BASE = 'http://localhost:8000/api';
 
 /**
  * Login with email and password.
@@ -34,11 +34,11 @@ export async function login(email, password) {
     throw new Error('Nieprawidłowa odpowiedź autoryzacji');
   }
 
-  sessionStorage.setItem('saas_access_token', access_token);
+  sessionStorage.setItem('pp_access_token', access_token);
   if (refresh_token) {
-    sessionStorage.setItem('saas_refresh_token', refresh_token);
+    sessionStorage.setItem('pp_refresh_token', refresh_token);
   }
-  sessionStorage.setItem('saas_user', JSON.stringify(user || {}));
+  sessionStorage.setItem('pp_user', JSON.stringify(user || {}));
 
   return data;
 }
@@ -72,11 +72,11 @@ export async function register(company_name, email, password) {
     throw new Error('Nieprawidłowa odpowiedź rejestracji');
   }
 
-  sessionStorage.setItem('saas_access_token', access_token);
+  sessionStorage.setItem('pp_access_token', access_token);
   if (refresh_token) {
-    sessionStorage.setItem('saas_refresh_token', refresh_token);
+    sessionStorage.setItem('pp_refresh_token', refresh_token);
   }
-  sessionStorage.setItem('saas_user', JSON.stringify(user || {}));
+  sessionStorage.setItem('pp_user', JSON.stringify(user || {}));
 
   return data;
 }
@@ -88,7 +88,7 @@ export async function register(company_name, email, password) {
  * @returns {Promise<string>} the new access token
  */
 export async function refresh() {
-  const refreshToken = sessionStorage.getItem('saas_refresh_token');
+  const refreshToken = sessionStorage.getItem('pp_refresh_token');
   if (!refreshToken) {
     logout();
     throw new Error('Brak tokena odświeżania');
@@ -110,7 +110,7 @@ export async function refresh() {
   }
 
   if (data.access_token) {
-    sessionStorage.setItem('saas_access_token', data.access_token);
+    sessionStorage.setItem('pp_access_token', data.access_token);
   }
 
   return data.access_token;
@@ -120,9 +120,9 @@ export async function refresh() {
  * Logout — clear session storage and redirect to login.
  */
 export function logout() {
-  sessionStorage.removeItem('saas_access_token');
-  sessionStorage.removeItem('saas_refresh_token');
-  sessionStorage.removeItem('saas_user');
+  sessionStorage.removeItem('pp_access_token');
+  sessionStorage.removeItem('pp_refresh_token');
+  sessionStorage.removeItem('pp_user');
   window.location.hash = '#login';
 }
 
@@ -134,8 +134,8 @@ export function logout() {
  * @returns {boolean}
  */
 export function isLoggedIn() {
-  const token = sessionStorage.getItem('saas_access_token');
-  const user = sessionStorage.getItem('saas_user');
+  const token = sessionStorage.getItem('pp_access_token');
+  const user = sessionStorage.getItem('pp_user');
   if (!token || !user) return false;
 
   // Decode JWT to check expiry
@@ -145,7 +145,7 @@ export function isLoggedIn() {
     const now = Math.floor(Date.now() / 1000);
     if (decoded.exp && decoded.exp < now) {
       // Access token expired — check if we have a refresh token
-      const refreshToken = sessionStorage.getItem('saas_refresh_token');
+      const refreshToken = sessionStorage.getItem('pp_refresh_token');
       if (refreshToken) {
         // Still considered logged in; api.js will auto-refresh on 401
         return true;
@@ -166,7 +166,7 @@ export function isLoggedIn() {
  * @returns {string|null}
  */
 export function getToken() {
-  return sessionStorage.getItem('saas_access_token');
+  return sessionStorage.getItem('pp_access_token');
 }
 
 /**
@@ -175,7 +175,7 @@ export function getToken() {
  */
 export function getUser() {
   try {
-    return JSON.parse(sessionStorage.getItem('saas_user'));
+    return JSON.parse(sessionStorage.getItem('pp_user'));
   } catch (_) {
     return null;
   }

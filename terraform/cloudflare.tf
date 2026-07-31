@@ -3,7 +3,8 @@
 # ──────────────────────────────────────────────
 
 data "cloudflare_zone" "main" {
-  name = var.domain_name
+  count = var.cloudflare_zone_id != "" ? 1 : 0
+  name  = var.domain_name
 }
 
 # ──────────────────────────────────────────────
@@ -12,41 +13,45 @@ data "cloudflare_zone" "main" {
 
 # API: CNAME to Scaleway Serverless Function endpoint
 resource "cloudflare_record" "api" {
-  zone_id = data.cloudflare_zone.main.id
+  count   = var.cloudflare_zone_id != "" ? 1 : 0
+  zone_id = data.cloudflare_zone.main[0].id
   name    = "api"
   type    = "CNAME"
   content = replace(local.function_endpoint, "https://", "")
   proxied = true
-  comment = "Wedding SaaS API — Scaleway Serverless Function"
+  comment = "PartyPilot API — Scaleway Serverless Function"
 }
 
 # Admin SPA: CNAME to Scaleway Object Storage website
 resource "cloudflare_record" "app" {
-  zone_id = data.cloudflare_zone.main.id
+  count   = var.cloudflare_zone_id != "" ? 1 : 0
+  zone_id = data.cloudflare_zone.main[0].id
   name    = "app"
   type    = "CNAME"
-  content = "wedding-saas-admin-spa.s3.pl-waw.scw.cloud"
+  content = "partypilot-admin-spa.s3.pl-waw.scw.cloud"
   proxied = true
-  comment = "Wedding SaaS Admin SPA — Scaleway Object Storage"
+  comment = "PartyPilot Admin SPA — Scaleway Object Storage"
 }
 
 # Booking Widget: CNAME to Scaleway Object Storage (same bucket)
 resource "cloudflare_record" "widget" {
-  zone_id = data.cloudflare_zone.main.id
+  count   = var.cloudflare_zone_id != "" ? 1 : 0
+  zone_id = data.cloudflare_zone.main[0].id
   name    = "widget"
   type    = "CNAME"
-  content = "wedding-saas-admin-spa.s3.pl-waw.scw.cloud"
+  content = "partypilot-admin-spa.s3.pl-waw.scw.cloud"
   proxied = true
-  comment = "Wedding SaaS Booking Widget — Scaleway Object Storage"
+  comment = "PartyPilot Booking Widget — Scaleway Object Storage"
 }
 
 # ──────────────────────────────────────────────
 # Page Rules
 # ──────────────────────────────────────────────
 
-# SPA routing: serve index.html for all paths under app.weddingsaas.pl
+# SPA routing: serve index.html for all paths under app.partypilot.pl
 resource "cloudflare_page_rule" "app_spa" {
-  zone_id = data.cloudflare_zone.main.id
+  count   = var.cloudflare_zone_id != "" ? 1 : 0
+  zone_id = data.cloudflare_zone.main[0].id
   target  = "app.${var.domain_name}/*"
   actions {
     forwarding_url {

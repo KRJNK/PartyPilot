@@ -1,5 +1,5 @@
 """
-Autoryzacja JWT dla Wedding SaaS.
+Autoryzacja JWT dla PartyPilot.
 
 Rejestracja, logowanie, refresh token, weryfikacja JWT.
 Używa python-jose (HS256) + passlib (bcrypt).
@@ -10,8 +10,8 @@ import os
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import bcrypt as _bcrypt
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 
 from db import get_connection, return_connection, query, execute, serialize, next_id
 
@@ -24,17 +24,18 @@ ALGORITHM = "HS256"
 
 # ── Password hashing ───────────────────────────────────────────
 
-_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
     """Zwraca bcrypt hash hasła."""
-    return _pwd_ctx.hash(password)
+    return _bcrypt.hashpw(password.encode("utf-8")[:72], _bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(password: str, hash: str) -> bool:
     """Weryfikuje hasło względem bcrypt hasha."""
-    return _pwd_ctx.verify(password, hash)
+    try:
+        return _bcrypt.checkpw(password.encode("utf-8")[:72], hash.encode("utf-8"))
+    except Exception:
+        return False
 
 
 # ── JWT tokeny ────────────────────────────────────────────────

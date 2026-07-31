@@ -1,5 +1,5 @@
 """
-Połączenie z PostgreSQL i helpery dla Wedding SaaS.
+Połączenie z PostgreSQL i helpery dla PartyPilot.
 
 Używa psycopg2 z pulą połączeń ThreadedConnectionPool.
 Wszystkie zapytania używają parametryzowanych wartości ($1, $2, …).

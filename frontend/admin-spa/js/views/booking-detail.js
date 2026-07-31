@@ -134,6 +134,24 @@ function renderDetail(app, b) {
 
   ${contractHtml}
 
+  <!-- Assigned Staff Section -->
+  <div class="card assignments-section" style="margin-top:1.5rem;">
+    <div class="card-header">&#128101; Przypisany personel</div>
+    <div id="assignments-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  </div>
+
+  <!-- Files Section -->
+  <div class="card files-section" style="margin-top:1.5rem;">
+    <div class="card-header">&#128206; Pliki</div>
+    <div id="files-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  </div>
+
+  <!-- Location Section -->
+  <div class="card" style="margin-top:1.5rem;">
+    <div class="card-header">&#128205; Lokalizacja wydarzenia</div>
+    <div id="location-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  </div>
+
   <!-- Edit form (hidden by default) -->
   <div id="detail-form-edit" style="display:none;"></div>
 
@@ -156,6 +174,11 @@ function renderDetail(app, b) {
   if (toggleBtn) {
     toggleBtn.addEventListener('click', () => toggleEditMode(app, b));
   }
+
+  // ── Load sections ──
+  renderAssignments(app, b);
+  renderFiles(app, b);
+  renderLocation(app, b);
 }
 
 /* ── Contract Handlers ─────────────────────────────────────── */
@@ -448,6 +471,332 @@ function setResult(msg, type) {
     inner = escapeHtml(msg);
   }
   el.innerHTML = '<div class="' + cls + '">' + inner + '</div>';
+}
+
+/* ── Assigned Staff Section ──────────────────────────────── */
+async function renderAssignments(app, b) {
+  const container = document.getElementById('assignments-content');
+  if (!container) return;
+  try {
+    const [assignments, users] = await Promise.all([
+      api.listAssignments(b.id),
+      api.listUsers(),
+    ]);
+    const list = Array.isArray(assignments) ? assignments : (assignments.data || []);
+    const userList = Array.isArray(users) ? users : (users.data || []);
+
+    let html = '<div class="assignments-list">';
+    if (list.length === 0) {
+      html += '<div class="empty-state" style="padding:1rem 0;"><span class="empty-icon" style="font-size:1.5rem;">&#128101;</span><p>Brak przypisanego personelu</p></div>';
+    } else {
+      for (const a of list) {
+        const user = a.user || a;
+        const userName = user.name || user.email || '—';
+        const userEmail = user.email || '—';
+        const role = a.role || a.role_at_event || '—';
+        const checkedIn = a.checked_in ? true : false;
+        const loc = a.location || user.location || '';
+        const lat = a.lat || user.lat || null;
+        const lng = a.lng || user.lng || null;
+        const locStr = loc;
+        const coords = lat && lng ? lat + ', ' + lng : '';
+
+        html += '<div class="assignment-row">';
+        html += '  <div class="assignment-info">';
+        html += '    <span class="assignment-name">' + escapeHtml(userName) + '</span>';
+        html += '    <span class="assignment-email">' + escapeHtml(userEmail) + '</span>';
+        html += '    <span class="badge badge-role">' + escapeHtml(role) + '</span>';
+        if (locStr) html += '    <span class="assignment-location">' + escapeHtml(locStr) + '</span>';
+        if (coords) html += '    <span class="assignment-coords text-faint">' + escapeHtml(coords) + '</span>';
+        html += '  </div>';
+        html += '  <div class="assignment-actions">';
+        // Check-in toggle
+        const userId = a.user_id || user.id;
+        html += '    <label class="checkbox-label assignment-checkin" style="font-size:0.78rem;">';
+        html += '      <input type="checkbox" class="checkin-toggle" data-user-id="' + escapeHtml(String(userId)) + '"' + (checkedIn ? ' checked' : '') + '>';
+        html += '      ' + (checkedIn ? 'Zameldowany' : 'Niepotwierdzony');
+        html += '    </label>';
+        // Remove button
+        html += '    <button class="btn btn-danger btn-sm assignment-remove" data-user-id="' + escapeHtml(String(userId)) + '">&#128465; Usuń</button>';
+        html += '  </div>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+
+    // Add assignment form
+    html += '<div class="assignment-add-form" style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(128,128,128,0.06);">';
+    html += '  <div class="form-row">';
+    html += '    <div class="form-group">';
+    html += '      <label>Dodaj członka zespołu</label>';
+    html += '      <select class="form-control" id="assignment-user-select">';
+    html += '        <option value="">— Wybierz użytkownika —</option>';
+    for (const u of userList) {
+      const alreadyAssigned = list.some(a => (a.user_id || (a.user && a.user.id)) === u.id);
+      if (alreadyAssigned) continue;
+      html += '        <option value="' + escapeHtml(String(u.id)) + '">' + escapeHtml(u.name || u.email || u.id) + ' (' + escapeHtml(u.email || '') + ')</option>';
+    }
+    html += '      </select>';
+    html += '    </div>';
+    html += '    <div class="form-group">';
+    html += '      <label>Rola na wydarzeniu</label>';
+    html += '      <input class="form-control" id="assignment-role-input" placeholder="np. DJ, Fotograf, Koordynator">';
+    html += '    </div>';
+    html += '  </div>';
+    html += '  <button class="btn btn-primary btn-sm" id="assignment-add-btn">+ Przypisz</button>';
+    html += '  <span id="assignment-add-error" class="text-faint" style="font-size:0.78rem;margin-left:0.5rem;"></span>';
+    html += '</div>';
+
+    container.innerHTML = html;
+    bindAssignmentEvents(app, b);
+  } catch (err) {
+    container.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function bindAssignmentEvents(app, b) {
+  // Check-in toggles
+  document.querySelectorAll('.checkin-toggle').forEach(function (cb) {
+    cb.addEventListener('change', async function () {
+      const userId = this.getAttribute('data-user-id');
+      const checked = this.checked;
+      try {
+        await api.updateAssignment(b.id, userId, { checked_in: checked });
+        showToast(checked ? 'Potwierdzono obecność' : 'Cofnięto potwierdzenie', 'success');
+        renderAssignments(app, b);
+      } catch (err) {
+        showToast(err.message, 'error');
+        this.checked = !checked;
+      }
+    });
+  });
+
+  // Remove assignment
+  document.querySelectorAll('.assignment-remove').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      if (!confirm('Usunąć tego członka personelu z rezerwacji?')) return;
+      const userId = this.getAttribute('data-user-id');
+      try {
+        await api.deleteAssignment(b.id, userId);
+        showToast('Usunięto przypisanie', 'success');
+        renderAssignments(app, b);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+
+  // Add assignment
+  const addBtn = document.getElementById('assignment-add-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', async function () {
+      const userId = document.getElementById('assignment-user-select')?.value;
+      const role = document.getElementById('assignment-role-input')?.value;
+      const errEl = document.getElementById('assignment-add-error');
+      if (!userId) {
+        if (errEl) errEl.textContent = 'Wybierz użytkownika';
+        return;
+      }
+      if (errEl) errEl.textContent = '';
+      addBtn.disabled = true;
+      addBtn.textContent = 'Dodawanie...';
+      try {
+        await api.createAssignment(b.id, { user_id: userId, role: role || '' });
+        showToast('Przypisano personel', 'success');
+        renderAssignments(app, b);
+      } catch (err) {
+        if (errEl) errEl.textContent = err.message;
+        addBtn.disabled = false;
+        addBtn.textContent = '+ Przypisz';
+      }
+    });
+  }
+}
+
+/* ── Files Section ────────────────────────────────────────── */
+async function renderFiles(app, b) {
+  const container = document.getElementById('files-content');
+  if (!container) return;
+  try {
+    const files = await api.listFiles(b.id);
+    const list = Array.isArray(files) ? files : (files.data || []);
+
+    let html = '<div class="files-list">';
+    if (list.length === 0) {
+      html += '<div class="empty-state" style="padding:1rem 0;"><span class="empty-icon" style="font-size:1.5rem;">&#128206;</span><p>Brak przesłanych plików</p></div>';
+    } else {
+      html += '<table class="files-table"><thead><tr><th>Nazwa pliku</th><th>Kategoria</th><th>Rozmiar</th><th>Przesłał</th><th>Data</th><th></th></tr></thead><tbody>';
+      for (const f of list) {
+        const fileName = f.original_name || f.filename || '—';
+        const category = f.category || '—';
+        const sizeStr = f.size ? formatFileSize(f.size) : '—';
+        const uploader = f.uploaded_by_name || f.uploaded_by || '—';
+        const dateStr = formatDate(f.created_at);
+        const fileId = f.id;
+        const downloadUrl = f.url || f.download_url || '';
+
+        html += '<tr>';
+        html += '  <td><span class="file-icon">&#128196;</span> ' + escapeHtml(fileName) + '</td>';
+        html += '  <td><span class="badge badge-file-category">' + escapeHtml(category) + '</span></td>';
+        html += '  <td class="text-faint">' + escapeHtml(sizeStr) + '</td>';
+        html += '  <td class="text-faint">' + escapeHtml(uploader) + '</td>';
+        html += '  <td class="text-faint">' + escapeHtml(dateStr) + '</td>';
+        html += '  <td class="files-actions">';
+        if (downloadUrl) {
+          html += '    <a class="btn btn-secondary btn-sm" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener">&#128229; Pobierz</a> ';
+        }
+        html += '    <button class="btn btn-danger btn-sm file-delete" data-file-id="' + escapeHtml(String(fileId)) + '">&#128465;</button>';
+        html += '  </td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+    html += '</div>';
+
+    // Upload form
+    html += '<div class="file-upload-form" style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(128,128,128,0.06);">';
+    html += '  <div class="form-row">';
+    html += '    <div class="form-group">';
+    html += '      <label>Plik</label>';
+    html += '      <input class="form-control" type="file" id="file-upload-input">';
+    html += '    </div>';
+    html += '    <div class="form-group">';
+    html += '      <label>Kategoria</label>';
+    html += '      <select class="form-control" id="file-category-select">';
+    html += '        <option value="contract">Kontrakt</option>';
+    html += '        <option value="invoice">Faktura</option>';
+    html += '        <option value="photo">Zdjęcie</option>';
+    html += '        <option value="music">Muzyka</option>';
+    html += '        <option value="other">Inne</option>';
+    html += '      </select>';
+    html += '    </div>';
+    html += '  </div>';
+    html += '  <div class="form-group">';
+    html += '    <label>Opis (opcjonalnie)</label>';
+    html += '    <input class="form-control" id="file-description-input" placeholder="Krótki opis pliku">';
+    html += '  </div>';
+    html += '  <button class="btn btn-primary btn-sm" id="file-upload-btn">&#128228; Prześlij plik</button>';
+    html += '  <span id="file-upload-error" class="text-faint" style="font-size:0.78rem;margin-left:0.5rem;"></span>';
+    html += '</div>';
+
+    container.innerHTML = html;
+    bindFileEvents(app, b);
+  } catch (err) {
+    container.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function bindFileEvents(app, b) {
+  // Delete file
+  document.querySelectorAll('.file-delete').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      if (!confirm('Usunąć ten plik?')) return;
+      const fileId = this.getAttribute('data-file-id');
+      try {
+        await api.deleteFile(b.id, fileId);
+        showToast('Plik usunięty', 'success');
+        renderFiles(app, b);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+
+  // Upload file
+  const uploadBtn = document.getElementById('file-upload-btn');
+  if (uploadBtn) {
+    uploadBtn.addEventListener('click', async function () {
+      const fileInput = document.getElementById('file-upload-input');
+      const categoryEl = document.getElementById('file-category-select');
+      const descEl = document.getElementById('file-description-input');
+      const errEl = document.getElementById('file-upload-error');
+
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        if (errEl) errEl.textContent = 'Wybierz plik';
+        return;
+      }
+      if (errEl) errEl.textContent = '';
+
+      const fd = new FormData();
+      fd.append('file', fileInput.files[0]);
+      if (categoryEl) fd.append('category', categoryEl.value);
+      if (descEl && descEl.value) fd.append('description', descEl.value);
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Przesyłanie...';
+      try {
+        await api.uploadFile(b.id, fd);
+        showToast('Plik przesłany', 'success');
+        // Reset form
+        if (fileInput) fileInput.value = '';
+        if (descEl) descEl.value = '';
+        renderFiles(app, b);
+      } catch (err) {
+        if (errEl) errEl.textContent = err.message;
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Prześlij plik';
+      }
+    });
+  }
+}
+
+/* ── Location Section ─────────────────────────────────────── */
+async function renderLocation(app, b) {
+  const container = document.getElementById('location-content');
+  if (!container) return;
+  try {
+    const locationText = b.event_location || '—';
+    const lat = b.event_lat || null;
+    const lng = b.event_lng || null;
+
+    let html = '<div><strong>Miejsce:</strong> ' + escapeHtml(locationText) + '</div>';
+    if (lat && lng) {
+      html += '<div class="text-faint" style="margin-top:0.3rem;font-size:0.82rem;">Współrzędne: ' + escapeHtml(lat) + ', ' + escapeHtml(lng) + '</div>';
+    }
+
+    // Show assigned user locations if available
+    try {
+      const assignments = await api.listAssignments(b.id);
+      const list = Array.isArray(assignments) ? assignments : (assignments.data || []);
+      const withCoords = list.filter(function (a) {
+        const u = a.user || a;
+        return u.lat && u.lng;
+      });
+      if (withCoords.length > 0) {
+        html += '<div style="margin-top:1rem;"><div class="detail-label" style="margin-bottom:0.4rem;">Lokalizacje personelu</div>';
+        for (const a of withCoords) {
+          const u = a.user || a;
+          const name = u.name || u.email || '—';
+          const loc = a.location || u.location || '';
+          html += '<div style="font-size:0.85rem;padding:0.25rem 0;">';
+          html += '  <span style="font-weight:500;">' + escapeHtml(name) + '</span>';
+          if (loc) html += ' &mdash; ' + escapeHtml(loc);
+          html += ' <span class="text-faint">(' + escapeHtml(u.lat) + ', ' + escapeHtml(u.lng) + ')</span>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+    } catch (_) {
+      // Ignore errors loading user locations — not critical
+    }
+
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+/* ── File size formatter ──────────────────────────────────── */
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '—';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let size = bytes;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
 }
 
 /* ── Helpers ──────────────────────────────────────────────── */

@@ -13,7 +13,7 @@ data "archive_file" "reminders_source" {
 # ──────────────────────────────────────────────
 
 resource "scaleway_function_namespace" "reminders" {
-  name   = "wedding-saas-cron"
+  name   = "partypilot-cron"
   region = "pl-waw"
   tags   = local.common_tags_list
 }
@@ -24,10 +24,11 @@ resource "scaleway_function_namespace" "reminders" {
 
 resource "scaleway_function" "d21_reminder" {
   namespace_id = scaleway_function_namespace.reminders.id
-  name         = "wedding-saas-d21-reminder"
+  name         = "partypilot-d21-reminder"
   runtime      = "python312"
   handler      = "reminders.handle_d21_reminders"
   privacy      = "private" # not publicly accessible, triggered by cron
+  deploy       = true
   zip_file     = data.archive_file.reminders_source.output_path
   zip_hash     = data.archive_file.reminders_source.output_sha256
   memory_limit = 256

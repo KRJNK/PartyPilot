@@ -13,7 +13,7 @@ data "archive_file" "api_source" {
 # ──────────────────────────────────────────────
 
 resource "scaleway_function_namespace" "api" {
-  name   = "wedding-saas"
+  name   = "partypilot"
   region = "pl-waw"
   tags   = local.common_tags_list
 }
@@ -24,10 +24,11 @@ resource "scaleway_function_namespace" "api" {
 
 resource "scaleway_function" "api" {
   namespace_id = scaleway_function_namespace.api.id
-  name         = "wedding-saas-api"
+  name         = "partypilot-api"
   runtime      = "python312"
   handler      = "main.handler"
   privacy      = "public"
+  deploy       = true
   zip_file     = data.archive_file.api_source.output_path
   zip_hash     = data.archive_file.api_source.output_sha256
   memory_limit = 512
@@ -47,6 +48,7 @@ resource "scaleway_function" "api" {
     SMTP_PASS       = var.smtp_password
     STORAGE_BUCKET  = scaleway_object_bucket.storage.name
     SCW_REGION      = "pl-waw-1"
+    MISTRAL_API_KEY = var.mistral_api_key
   }
 
   depends_on = [

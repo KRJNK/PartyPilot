@@ -26,7 +26,7 @@ resource "random_password" "jwt_secret" {
 
 resource "scaleway_secret" "database_url" {
   name        = "database-url"
-  description = "PostgreSQL connection string for Wedding SaaS"
+  description = "PostgreSQL connection string for PartyPilot"
   tags        = local.common_tags_list
 }
 
@@ -37,7 +37,7 @@ resource "scaleway_secret_version" "database_url" {
 
 resource "scaleway_secret" "jwt_secret" {
   name        = "jwt-secret"
-  description = "JWT signing key for Wedding SaaS"
+  description = "JWT signing key for PartyPilot"
   tags        = local.common_tags_list
 }
 
@@ -58,4 +58,15 @@ resource "scaleway_secret_version" "smtp_credentials" {
     username = var.smtp_username
     password = var.smtp_password
   })
+}
+
+resource "scaleway_secret" "mistral_api_key" {
+  name        = "mistral-api-key"
+  description = "Mistral AI API key for PartyPilot chat assistant"
+  tags        = local.common_tags_list
+}
+
+resource "scaleway_secret_version" "mistral_api_key" {
+  secret_id = scaleway_secret.mistral_api_key.id
+  data      = var.mistral_api_key
 }
