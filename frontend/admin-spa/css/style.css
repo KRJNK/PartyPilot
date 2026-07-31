@@ -406,6 +406,7 @@ tbody tr:hover { background: rgba(128, 128, 128, 0.03); }
 /* ── Deposit badge ────────────────────────────────────────── */
 .deposit-paid { color: var(--success); font-weight: 500; }
 .deposit-unpaid { color: var(--warning); font-weight: 500; }
+.deposit-none { color: var(--text-faint); font-weight: 400; }
 
 /* ── Status Timeline ──────────────────────────────────────── */
 .timeline { margin: 1rem 0; }

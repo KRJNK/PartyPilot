@@ -76,9 +76,13 @@ function renderDetail(app, b) {
     actionsHtml += ` <span class="badge badge-deposit_paid">Zaliczka opłacona</span>`;
   }
 
+  const hasDeposit = b.deposit_amount && parseFloat(b.deposit_amount) > 0;
+
   const depositStatus = b.deposit_paid
-    ? '<span class="deposit-paid">&#10003; Opłacona' + (b.deposit_paid_at ? ' (' + escapeHtml(formatDate(b.deposit_paid_at)) + ')' : '') + '</span>'
-    : '<span class="deposit-unpaid">&#9679; Nieopłacona' + (b.deposit_amount ? ' — ' + escapeHtml(b.deposit_amount) + ' zł' : '') + '</span>';
+    ? '<span class="deposit-paid">&#10003; Opłacona' + (b.deposit_paid_at ? ' (' + escapeHtml(formatDate(b.deposit_paid_at)) + ')' : '') + (hasDeposit ? ' — ' + escapeHtml(b.deposit_amount) + ' zł' : '') + '</span>'
+    : hasDeposit
+      ? '<span class="deposit-unpaid">&#9679; Nieopłacona — ' + escapeHtml(b.deposit_amount) + ' zł</span>'
+      : '<span class="deposit-none">Brak zaliczki</span>';
 
   // Contract section
   const hasContract = b.contract_url && b.contract_url.length > 0;
@@ -418,8 +422,14 @@ function toggleEditMode(app, b) {
       <input class="form-control" name="package_price" value="${escapeHtml(b.package_price || b.package_final_price || '')}" placeholder="np. 2999">
     </div>
     <div class="form-group">
-      <label>Kwota zaliczki</label>
-      <input class="form-control" name="deposit_amount" value="${b.deposit_amount || ''}" placeholder="np. 500">
+      <label>Zaliczka</label>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:0.4rem;font-weight:400;white-space:nowrap;">
+          <input type="checkbox" name="deposit_required" value="1" ${hasDeposit ? 'checked' : ''} style="width:auto;margin:0;" id="deposit-toggle">
+          Wymagaj zaliczki
+        </label>
+        <input class="form-control" type="number" name="deposit_amount" value="${b.deposit_amount || ''}" placeholder="Kwota (zł)" id="deposit-amount-input" style="${hasDeposit ? '' : 'display:none;'}">
+      </div>
     </div>
   </div>
   <div id="edit-form-error"></div>
@@ -429,6 +439,21 @@ function toggleEditMode(app, b) {
   </div>
 </form>
   `;
+
+  // Deposit toggle — show/hide amount field
+  const depositToggle = document.getElementById('deposit-toggle');
+  const depositInput = document.getElementById('deposit-amount-input');
+  if (depositToggle && depositInput) {
+    depositToggle.addEventListener('change', () => {
+      if (depositToggle.checked) {
+        depositInput.style.display = '';
+        if (!depositInput.value) depositInput.focus();
+      } else {
+        depositInput.style.display = 'none';
+        depositInput.value = '';
+      }
+    });
+  }
 
   // Save handler
   const editFormEl = document.getElementById('booking-edit-form');
@@ -448,6 +473,12 @@ function toggleEditMode(app, b) {
     const data = {};
     fd.forEach((v, k) => { data[k] = v; });
     data.internal_notes = notesVal;
+
+    // If deposit not required, clear amount
+    if (!fd.get('deposit_required')) {
+      data.deposit_amount = 0;
+    }
+    delete data.deposit_required;
 
     try {
       await api.updateBooking(b.id, data);
