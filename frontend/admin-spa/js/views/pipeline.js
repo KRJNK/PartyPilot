@@ -51,7 +51,7 @@ async function loadPipeline(app) {
 
   try {
     const data = await api.getPipeline();
-    pipelineData = data.groups || data.bookings || data || {};
+    pipelineData = data.columns || data.groups || data.bookings || data || {};
     renderBoard(wrap, app);
   } catch (err) {
     wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
