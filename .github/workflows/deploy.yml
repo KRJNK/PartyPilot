@@ -65,6 +65,7 @@ jobs:
           TF_VAR_smtp_username: ${{ secrets.SMTP_USERNAME }}
           TF_VAR_smtp_password: ${{ secrets.SMTP_PASSWORD }}
           TF_VAR_mistral_api_key: ${{ secrets.MISTRAL_API_KEY }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
 
       - name: Terraform Apply
@@ -75,6 +76,7 @@ jobs:
           TF_VAR_smtp_username: ${{ secrets.SMTP_USERNAME }}
           TF_VAR_smtp_password: ${{ secrets.SMTP_PASSWORD }}
           TF_VAR_mistral_api_key: ${{ secrets.MISTRAL_API_KEY }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
 
       - name: Read Terraform outputs
