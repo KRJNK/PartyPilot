@@ -358,6 +358,8 @@ function toggleEditMode(app, b) {
   notesEdit.style.display = '';
   toggleBtn.textContent = 'Anuluj edycję';
 
+  const hasDeposit = b.deposit_amount && parseFloat(b.deposit_amount) > 0;
+
   editForm.style.display = '';
   editForm.innerHTML = `
 <h3 style="font-size:0.95rem;font-weight:500;margin-bottom:1rem;">Edycja rezerwacji</h3>
