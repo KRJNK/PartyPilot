@@ -254,6 +254,42 @@ const api = {
     return apiCall('DELETE', 'admin/bookings/' + encodeURIComponent(bookingId) + '/files/' + encodeURIComponent(fileId));
   },
 
+  // Services (add-on catalog)
+  listServices() {
+    return apiCall('GET', 'admin/services');
+  },
+  createService(data) {
+    return apiCall('POST', 'admin/services', data);
+  },
+  updateService(id, data) {
+    return apiCall('PUT', 'admin/services/' + encodeURIComponent(id), data);
+  },
+  deleteService(id) {
+    return apiCall('DELETE', 'admin/services/' + encodeURIComponent(id));
+  },
+
+  // Package Services
+  listPackageServices(packageId) {
+    return apiCall('GET', 'admin/packages/' + encodeURIComponent(packageId) + '/services');
+  },
+  updatePackageServices(packageId, serviceIds) {
+    return apiCall('PUT', 'admin/packages/' + encodeURIComponent(packageId) + '/services', { service_ids: serviceIds });
+  },
+
+  // Booking Services (add-ons)
+  listBookingServices(bookingId) {
+    return apiCall('GET', 'admin/bookings/' + encodeURIComponent(bookingId) + '/services');
+  },
+  addBookingService(bookingId, data) {
+    return apiCall('POST', 'admin/bookings/' + encodeURIComponent(bookingId) + '/services', data);
+  },
+  updateBookingService(bookingId, serviceId, data) {
+    return apiCall('PUT', 'admin/bookings/' + encodeURIComponent(bookingId) + '/services/' + encodeURIComponent(serviceId), data);
+  },
+  deleteBookingService(bookingId, serviceId) {
+    return apiCall('DELETE', 'admin/bookings/' + encodeURIComponent(bookingId) + '/services/' + encodeURIComponent(serviceId));
+  },
+
   // Tenant
   getTenant() {
     return apiCall('GET', 'admin/tenant');

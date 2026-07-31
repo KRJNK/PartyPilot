@@ -76,6 +76,17 @@ ADMIN_BOOKINGS_FILES_RE = re.compile(
     r"^/api/admin/bookings/([^/]+)/files(?:/([^/]+))?$"
 )
 
+# ── Services (catalog) ──
+ADMIN_SERVICES_RE = re.compile(r"^/api/admin/services(?:/([^/]+))?$")
+
+# ── Package Services ──
+ADMIN_PACKAGE_SERVICES_RE = re.compile(r"^/api/admin/packages/([^/]+)/services$")
+
+# ── Booking Services ──
+ADMIN_BOOKING_SERVICES_RE = re.compile(
+    r"^/api/admin/bookings/([^/]+)/services(?:/([^/]+))?$"
+)
+
 # ── Users ──
 ADMIN_USERS_RE = re.compile(
     r"^/api/admin/users(?:/([^/]+))?(?:/(location))?$"
@@ -258,6 +269,46 @@ def _route(event, context):
 
         return _require_cors(_response(404, {"error": "Not found"}), cors)
 
+    # ── Booking Services (must be BEFORE generic bookings CRUD) ──
+    m_bsvc = ADMIN_BOOKING_SERVICES_RE.match(path)
+    if m_bsvc:
+        booking_id = m_bsvc.group(1)
+        service_id_param = m_bsvc.group(2)
+
+        from services import (
+            handle_list_booking_services,
+            handle_create_booking_service,
+            handle_update_booking_service,
+            handle_delete_booking_service,
+        )
+
+        # GET  /api/admin/bookings/{id}/services
+        if not service_id_param and method == "GET":
+            return _require_cors(
+                handle_list_booking_services(tenant_id, booking_id), cors
+            )
+        # POST /api/admin/bookings/{id}/services
+        if not service_id_param and method == "POST":
+            return _require_cors(
+                handle_create_booking_service(tenant_id, booking_id, event), cors
+            )
+        # PUT /api/admin/bookings/{id}/services/{service_id}
+        if service_id_param and method == "PUT":
+            return _require_cors(
+                handle_update_booking_service(
+                    tenant_id, booking_id, service_id_param, event
+                ), cors
+            )
+        # DELETE /api/admin/bookings/{id}/services/{service_id}
+        if service_id_param and method == "DELETE":
+            return _require_cors(
+                handle_delete_booking_service(
+                    tenant_id, booking_id, service_id_param
+                ), cors
+            )
+
+        return _require_cors(_response(404, {"error": "Not found"}), cors)
+
     # ── Users ─────────────────────────────────────────────
     m_users = ADMIN_USERS_RE.match(path)
     if m_users:
@@ -373,6 +424,56 @@ def _route(event, context):
             # DELETE /api/admin/packages/{id}
             if method == "DELETE":
                 return _require_cors(_pkg_delete(tenant_id, pkg_id), cors)
+
+        return _require_cors(_response(404, {"error": "Not found"}), cors)
+
+    # ── Package Services (linking) ───────────────────────
+    m_psvc = ADMIN_PACKAGE_SERVICES_RE.match(path)
+    if m_psvc:
+        pkg_id = m_psvc.group(1)
+
+        from services import (
+            handle_list_package_services,
+            handle_replace_package_services,
+        )
+
+        # GET /api/admin/packages/{id}/services
+        if method == "GET":
+            return _require_cors(
+                handle_list_package_services(tenant_id, pkg_id), cors
+            )
+        # PUT /api/admin/packages/{id}/services
+        if method == "PUT":
+            return _require_cors(
+                handle_replace_package_services(tenant_id, pkg_id, event), cors
+            )
+
+        return _require_cors(_response(404, {"error": "Not found"}), cors)
+
+    # ── Services Catalog CRUD ────────────────────────────
+    m_svc = ADMIN_SERVICES_RE.match(path)
+    if m_svc:
+        svc_id = m_svc.group(1)
+
+        from services import (
+            handle_list_services,
+            handle_create_service,
+            handle_update_service,
+            handle_delete_service,
+        )
+
+        # GET  /api/admin/services
+        if not svc_id and method == "GET":
+            return _require_cors(handle_list_services(tenant_id), cors)
+        # POST /api/admin/services
+        if not svc_id and method == "POST":
+            return _require_cors(handle_create_service(tenant_id, event), cors)
+        # PUT  /api/admin/services/{id}
+        if svc_id and method == "PUT":
+            return _require_cors(handle_update_service(tenant_id, svc_id, event), cors)
+        # DELETE /api/admin/services/{id}
+        if svc_id and method == "DELETE":
+            return _require_cors(handle_delete_service(tenant_id, svc_id), cors)
 
         return _require_cors(_response(404, {"error": "Not found"}), cors)
 

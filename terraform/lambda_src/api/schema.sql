@@ -134,6 +134,46 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, created_at);
 
+-- ── Services (Add-on catalog) ──
+CREATE TABLE IF NOT EXISTS services (
+    id          VARCHAR(32) PRIMARY KEY,
+    tenant_id   VARCHAR(32) NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    base_price  DECIMAL(10,2) NOT NULL DEFAULT 0,
+    category    VARCHAR(50) DEFAULT 'Inne',
+    is_active   BOOLEAN DEFAULT TRUE,
+    sort_order  INTEGER DEFAULT 0,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_services_tenant ON services(tenant_id);
+
+-- ── Package Services (linking) ──
+CREATE TABLE IF NOT EXISTS package_services (
+    id          BIGSERIAL PRIMARY KEY,
+    package_id  VARCHAR(32) NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
+    service_id  VARCHAR(32) NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(package_id, service_id)
+);
+CREATE INDEX IF NOT EXISTS idx_package_services_package ON package_services(package_id);
+CREATE INDEX IF NOT EXISTS idx_package_services_service ON package_services(service_id);
+
+-- ── Booking Services (add-ons per booking) ──
+CREATE TABLE IF NOT EXISTS booking_services (
+    id          BIGSERIAL PRIMARY KEY,
+    booking_id  VARCHAR(20) NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+    service_id  VARCHAR(32) REFERENCES services(id) ON DELETE SET NULL,
+    name        TEXT NOT NULL,
+    price       DECIMAL(10,2) NOT NULL DEFAULT 0,
+    is_included BOOLEAN DEFAULT FALSE,
+    notes       TEXT DEFAULT '',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_booking_services_booking ON booking_services(booking_id);
+CREATE INDEX IF NOT EXISTS idx_booking_services_service ON booking_services(service_id);
+
 -- ── Seed: Demo Tenant + Admin User ──
 -- Password hash for "partypilot123" (bcrypt)
 -- Generated via: python3 -c "from passlib.context import CryptContext; ctx=CryptContext(schemes=['bcrypt'],deprecated='auto'); print(ctx.hash('partypilot123'))"
@@ -173,3 +213,33 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO ai_config (tenant_id, enabled, system_prompt, faq_text, tone, escalation_email, auto_create_booking)
 VALUES ('T-demo', TRUE, 'Jesteś asystentem DJ-a na wesele. Odpowiadasz na pytania o pakiety, ceny, dostępność terminów. Bądź pomocny i zachęcaj do rezerwacji.', 'Pakiety: Basic 2500 zł, Premium 4000 zł, VIP 6000 zł. Każdy pakiet wymaga zadatku. Rezerwacja potwierdzana po wpłacie zadatku.', 'friendly', 'demo@partypilot.pl', TRUE)
 ON CONFLICT (tenant_id) DO NOTHING;
+
+-- ── Seed: Demo Services (Add-on catalog) ──
+INSERT INTO services (id, tenant_id, name, description, base_price, category, sort_order) VALUES
+('SVC-demo001', 'T-demo', 'DJ', 'Professional DJ service', 2000, 'Muzyka', 1),
+('SVC-demo002', 'T-demo', 'Saksofonista', 'Live saxophone performance', 800, 'Muzyka', 2),
+('SVC-demo003', 'T-demo', 'Ciężki dym', 'Heavy fog machine', 300, 'Efekty', 3),
+('SVC-demo004', 'T-demo', 'Fotobudka', 'Photo booth with props', 500, 'Foto', 4),
+('SVC-demo005', 'T-demo', 'Race z iskrami', 'Cold sparklers', 200, 'Efekty', 5),
+('SVC-demo006', 'T-demo', 'Konferansjer', 'MC service (PL)', 600, 'Muzyka', 6),
+('SVC-demo007', 'T-demo', 'Konferansjer EN', 'MC service (English)', 800, 'Muzyka', 7),
+('SVC-demo008', 'T-demo', 'Celebrant ślubny', 'Wedding celebrant', 400, 'Inne', 8)
+ON CONFLICT (id) DO NOTHING;
+
+-- ── Seed: Package ↔ Service links ──
+INSERT INTO package_services (package_id, service_id) VALUES
+('PKG-demo001', 'SVC-demo001'),
+('PKG-demo002', 'SVC-demo001'),
+('PKG-demo002', 'SVC-demo002'),
+('PKG-demo002', 'SVC-demo003'),
+('PKG-demo003', 'SVC-demo001'),
+('PKG-demo003', 'SVC-demo002'),
+('PKG-demo003', 'SVC-demo003'),
+('PKG-demo003', 'SVC-demo004'),
+('PKG-demo003', 'SVC-demo005')
+ON CONFLICT DO NOTHING;
+
+-- ── Seed: Booking Service (add-on for BOOK-2026-001) ──
+INSERT INTO booking_services (booking_id, service_id, name, price, is_included, notes) VALUES
+('BOOK-2026-001', 'SVC-demo006', 'Konferansjer', 600, FALSE, 'Dodany do rezerwacji')
+ON CONFLICT DO NOTHING;

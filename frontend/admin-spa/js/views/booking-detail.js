@@ -152,6 +152,12 @@ function renderDetail(app, b) {
     <div id="location-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
   </div>
 
+  <!-- Services (add-ons) Section -->
+  <div class="card" style="margin-top:1.5rem;">
+    <div class="card-header">&#127925; Usługi dodatkowe</div>
+    <div id="booking-services-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  </div>
+
   <!-- Edit form (hidden by default) -->
   <div id="detail-form-edit" style="display:none;"></div>
 
@@ -179,6 +185,7 @@ function renderDetail(app, b) {
   renderAssignments(app, b);
   renderFiles(app, b);
   renderLocation(app, b);
+  renderBookingServices(app, b);
 }
 
 /* ── Contract Handlers ─────────────────────────────────────── */
@@ -786,6 +793,253 @@ async function renderLocation(app, b) {
   }
 }
 
+/* ── Booking Services (Add-ons) Section ────────────────────── */
+async function renderBookingServices(app, b) {
+  const container = document.getElementById('booking-services-content');
+  if (!container) return;
+  try {
+    const [bookingServicesResp, catalogResp] = await Promise.all([
+      api.listBookingServices(b.id),
+      api.listServices(),
+    ]);
+    const services = Array.isArray(bookingServicesResp) ? bookingServicesResp : (bookingServicesResp.services || bookingServicesResp.data || []);
+    const totalAddons = bookingServicesResp.total_addons;
+    const catalog = Array.isArray(catalogResp) ? catalogResp : (catalogResp.services || catalogResp.data || []);
+    // Only active catalog services are selectable
+    const activeCatalog = catalog.filter(function (s) { return s.is_active !== false && s.active !== false; });
+
+    let html = '<div class="booking-services-list">';
+    if (!services || services.length === 0) {
+      html += '<div class="empty-state" style="padding:1rem 0;"><span class="empty-icon" style="font-size:1.5rem;">&#127925;</span><p>Brak usług dodatkowych w tej rezerwacji</p></div>';
+    } else {
+      html += '<table class="files-table"><thead><tr><th>Usługa</th><th>Cena</th><th>Notatki</th><th></th></tr></thead><tbody>';
+      for (const s of services) {
+        const serviceId = s.service_id || s.id;
+        const name = s.name || s.service_name || ('#' + serviceId);
+        const price = (s.price != null) ? (formatPrice(s.price) + ' zł') : '—';
+        const notes = s.notes || '';
+        const isIncluded = s.is_included === true;
+
+        html += '<tr>';
+        html += '  <td><span style="font-weight:500;">' + escapeHtml(name) + '</span>';
+        if (isIncluded) html += ' <span class="badge badge-confirmed">Wliczone w pakiet</span>';
+        html += '  </td>';
+        html += '  <td>' + escapeHtml(price) + '</td>';
+        html += '  <td class="text-faint">' + escapeHtml(notes || '—') + '</td>';
+        html += '  <td class="files-actions">';
+        html += '    <button class="btn btn-secondary btn-sm booking-service-edit" data-service-id="' + escapeHtml(String(serviceId)) + '">&#9998; Edytuj</button> ';
+        html += '    <button class="btn btn-danger btn-sm booking-service-delete" data-service-id="' + escapeHtml(String(serviceId)) + '">&#128465; Usuń</button>';
+        html += '  </td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+    html += '</div>';
+
+    // Total add-ons cost
+    let computedTotal = 0;
+    for (const s of services) {
+      if (s.is_included === true) continue; // included in package, not extra
+      if (s.price != null && !isNaN(Number(s.price))) computedTotal += Number(s.price);
+    }
+    const totalDisplay = (totalAddons != null) ? formatPrice(totalAddons) : formatPrice(computedTotal);
+    html += '<div style="margin-top:0.75rem;font-weight:500;">Razem dodatki: ' + escapeHtml(totalDisplay) + ' zł</div>';
+
+    // Add service form
+    const addedIds = services.map(function (s) { return String(s.service_id || s.id); });
+    const available = activeCatalog.filter(function (s) { return addedIds.indexOf(String(s.id)) === -1; });
+
+    html += '<div class="assignment-add-form" style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(128,128,128,0.06);">';
+    if (available.length === 0) {
+      html += '<div class="text-faint" style="font-size:0.82rem;">Wszystkie dostępne usługi zostały już dodane.</div>';
+    } else {
+      html += '  <div class="form-row">';
+      html += '    <div class="form-group">';
+      html += '      <label>Wybierz usługę</label>';
+      html += '      <select class="form-control" id="booking-service-select">';
+      html += '        <option value="">— Wybierz usługę —</option>';
+      for (const s of available) {
+        const priceLabel = (s.base_price != null) ? ' (' + formatPrice(s.base_price) + ' zł)' : '';
+        html += '        <option value="' + escapeHtml(String(s.id)) + '" data-base-price="' + escapeHtml(String(s.base_price || '')) + '">' + escapeHtml(s.name || s.id) + escapeHtml(priceLabel) + '</option>';
+      }
+      html += '      </select>';
+      html += '    </div>';
+      html += '    <div class="form-group">';
+      html += '      <label>Cena (zł)</label>';
+      html += '      <input class="form-control" type="number" step="0.01" min="0" id="booking-service-price" placeholder="np. 500">';
+      html += '    </div>';
+      html += '  </div>';
+      html += '  <div class="form-group">';
+      html += '    <label>Notatki (opcjonalnie)</label>';
+      html += '    <input class="form-control" id="booking-service-notes" placeholder="np. uzgodniony termin, szczegóły">';
+      html += '  </div>';
+      html += '  <button class="btn btn-primary btn-sm" id="booking-service-add-btn">+ Dodaj usługę</button>';
+      html += '  <span id="booking-service-add-error" class="text-faint" style="font-size:0.78rem;margin-left:0.5rem;"></span>';
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+    bindBookingServiceEvents(app, b, catalog);
+  } catch (err) {
+    container.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function bindBookingServiceEvents(app, b, catalog) {
+  // Auto-fill price when selecting a service
+  const selectEl = document.getElementById('booking-service-select');
+  const priceEl = document.getElementById('booking-service-price');
+  if (selectEl && priceEl) {
+    selectEl.addEventListener('change', function () {
+      const opt = selectEl.options[selectEl.selectedIndex];
+      const basePrice = opt ? opt.getAttribute('data-base-price') : '';
+      if (basePrice !== '') priceEl.value = basePrice;
+    });
+  }
+
+  // Add service
+  const addBtn = document.getElementById('booking-service-add-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', async function () {
+      const serviceId = selectEl ? selectEl.value : '';
+      const price = priceEl ? priceEl.value : '';
+      const notesEl = document.getElementById('booking-service-notes');
+      const errEl = document.getElementById('booking-service-add-error');
+      if (!serviceId) {
+        if (errEl) errEl.textContent = 'Wybierz usługę';
+        return;
+      }
+      if (errEl) errEl.textContent = '';
+      const data = { service_id: serviceId };
+      if (price !== '') data.price = parseFloat(price);
+      if (notesEl && notesEl.value) data.notes = notesEl.value;
+
+      addBtn.disabled = true;
+      addBtn.textContent = 'Dodawanie...';
+      try {
+        await api.addBookingService(b.id, data);
+        showToast('Dodano usługę do rezerwacji', 'success');
+        renderBookingServices(app, b);
+      } catch (err) {
+        if (errEl) errEl.textContent = err.message;
+        addBtn.disabled = false;
+        addBtn.textContent = '+ Dodaj usługę';
+      }
+    });
+  }
+
+  // Edit service (open modal with price + notes)
+  document.querySelectorAll('.booking-service-edit').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const serviceId = this.getAttribute('data-service-id');
+      showBookingServiceEditModal(app, b, serviceId, catalog);
+    });
+  });
+
+  // Delete service
+  document.querySelectorAll('.booking-service-delete').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      const serviceId = this.getAttribute('data-service-id');
+      if (!confirm('Usunąć tę usługę z rezerwacji?')) return;
+      try {
+        await api.deleteBookingService(b.id, serviceId);
+        showToast('Usługa usunięta z rezerwacji', 'success');
+        renderBookingServices(app, b);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+}
+
+function showBookingServiceEditModal(app, b, serviceId, catalog) {
+  // Find current booking service from DOM is unreliable; reload from API
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+<div class="modal-content">
+  <button class="modal-close" id="bs-modal-close">&times;</button>
+  <h2>Edytuj usługę</h2>
+  <div id="bs-modal-body"><div class="loading"><div class="spinner"></div><p>Ładowanie...</p></div></div>
+</div>
+  `;
+  document.body.appendChild(overlay);
+
+  function closeModal() { overlay.remove(); }
+  overlay.querySelector('.modal-close').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+
+  (async function () {
+    let current;
+    try {
+      const resp = await api.listBookingServices(b.id);
+      const list = Array.isArray(resp) ? resp : (resp.services || resp.data || []);
+      current = list.find(function (s) { return String(s.service_id || s.id) === String(serviceId); });
+    } catch (err) {
+      document.getElementById('bs-modal-body').innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      return;
+    }
+    if (!current) {
+      document.getElementById('bs-modal-body').innerHTML = '<div class="error-box">Nie znaleziono usługi w rezerwacji.</div>';
+      return;
+    }
+
+    const name = current.name || current.service_name || ('#' + serviceId);
+    const isIncluded = current.is_included === true;
+    const price = (current.price != null) ? current.price : '';
+    const notes = current.notes || '';
+
+    document.getElementById('bs-modal-body').innerHTML = `
+<form id="bs-edit-form">
+  <div class="form-group">
+    <label>Usługa</label>
+    <div style="font-weight:500;padding:0.4rem 0;">${escapeHtml(name)}${isIncluded ? ' <span class="badge badge-confirmed">Wliczone w pakiet</span>' : ''}</div>
+  </div>
+  <div class="form-group">
+    <label>Cena (zł)</label>
+    <input class="form-control" type="number" step="0.01" min="0" name="price" value="${escapeHtml(price)}" placeholder="np. 500">
+  </div>
+  <div class="form-group">
+    <label>Notatki</label>
+    <textarea class="form-control" name="notes">${escapeHtml(notes)}</textarea>
+  </div>
+  <div id="bs-edit-error"></div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+    <button type="button" class="btn btn-secondary" id="bs-edit-cancel">Anuluj</button>
+  </div>
+</form>
+    `;
+
+    document.getElementById('bs-edit-cancel').addEventListener('click', closeModal);
+
+    const form = document.getElementById('bs-edit-form');
+    const errorEl = document.getElementById('bs-edit-error');
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      errorEl.innerHTML = '';
+      const fd = new FormData(form);
+      const data = {};
+      if (fd.get('price') !== '') data.price = parseFloat(fd.get('price'));
+      data.notes = fd.get('notes') || '';
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Zapisywanie...';
+      try {
+        await api.updateBookingService(b.id, serviceId, data);
+        showToast('Zaktualizowano usługę', 'success');
+        closeModal();
+        renderBookingServices(app, b);
+      } catch (err) {
+        errorEl.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Zapisz zmiany';
+      }
+    });
+  })();
+}
+
 /* ── File size formatter ──────────────────────────────────── */
 function formatFileSize(bytes) {
   if (!bytes || bytes === 0) return '—';
@@ -834,4 +1088,10 @@ function formatTimestamp(ts) {
 function clientTypeLabel(type) {
   const labels = { bride_groom: 'Para Młoda', dj: 'DJ', agency: 'Agencja / Inna' };
   return labels[type] || type || '—';
+}
+
+function formatPrice(val) {
+  const n = Number(val);
+  if (isNaN(n)) return String(val);
+  return n.toFixed(2).replace(/\.00$/, '');
 }

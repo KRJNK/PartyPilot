@@ -226,6 +226,43 @@ resource "null_resource" "db_migrations" {
           created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, created_at);
+
+      CREATE TABLE IF NOT EXISTS services (
+          id          VARCHAR(32) PRIMARY KEY,
+          tenant_id   VARCHAR(32) NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+          name        TEXT NOT NULL,
+          description TEXT DEFAULT '',
+          base_price  DECIMAL(10,2) NOT NULL DEFAULT 0,
+          category    VARCHAR(50) DEFAULT 'Inne',
+          is_active   BOOLEAN DEFAULT TRUE,
+          sort_order  INTEGER DEFAULT 0,
+          created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_services_tenant ON services(tenant_id);
+
+      CREATE TABLE IF NOT EXISTS package_services (
+          id          BIGSERIAL PRIMARY KEY,
+          package_id  VARCHAR(32) NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
+          service_id  VARCHAR(32) NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+          created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          UNIQUE(package_id, service_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_package_services_package ON package_services(package_id);
+      CREATE INDEX IF NOT EXISTS idx_package_services_service ON package_services(service_id);
+
+      CREATE TABLE IF NOT EXISTS booking_services (
+          id          BIGSERIAL PRIMARY KEY,
+          booking_id  VARCHAR(20) NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+          service_id  VARCHAR(32) REFERENCES services(id) ON DELETE SET NULL,
+          name        TEXT NOT NULL,
+          price       DECIMAL(10,2) NOT NULL DEFAULT 0,
+          is_included BOOLEAN DEFAULT FALSE,
+          notes       TEXT DEFAULT '',
+          created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_booking_services_booking ON booking_services(booking_id);
+      CREATE INDEX IF NOT EXISTS idx_booking_services_service ON booking_services(service_id);
       SQL
     EOT
   }
