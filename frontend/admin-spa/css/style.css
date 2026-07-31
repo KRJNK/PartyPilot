@@ -109,6 +109,18 @@ a:hover { color: var(--primary-hover); }
 
 .sidebar-nav a .nav-icon { width: 20px; text-align: center; font-size: 1rem; }
 
+.sidebar-nav .nav-section {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin-top: 1.1rem;
+  margin-bottom: 0.3rem;
+  padding: 0 0.85rem;
+}
+.sidebar-nav .nav-section:first-child { margin-top: 0; }
+
 .sidebar-footer {
   padding-top: 1rem;
   border-top: 1px solid rgba(128, 128, 128, 0.1);

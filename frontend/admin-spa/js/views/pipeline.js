@@ -25,13 +25,13 @@ export async function renderPipeline(app) {
   app.innerHTML = `
 <div class="page-header">
   <div>
-    <h1>Pipeline</h1>
-    <div class="subtitle">Zarządzaj rezerwacjami metodą Kanban</div>
+    <h1>Tablica</h1>
+    <div class="subtitle">Przeciągaj rezerwacje między statusami</div>
   </div>
   <button class="btn btn-primary" id="pipeline-new-btn">+ Nowa rezerwacja</button>
 </div>
 <div id="pipeline-wrap">
-  <div class="loading"><div class="spinner"></div><p>Ładowanie pipeline...</p></div>
+  <div class="loading"><div class="spinner"></div><p>Ładowanie tablicy...</p></div>
 </div>
   `;
 

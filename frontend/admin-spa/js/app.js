@@ -170,16 +170,25 @@ function init() {
   <div class="sidebar-logo">PartyPilot</div>
   <div class="sidebar-sub">Panel administracyjny</div>
   <nav class="sidebar-nav">
-    <a href="#dashboard" data-nav="dashboard"><span class="nav-icon">&#9783;</span> Dashboard</a>
-    <a href="#bookings" data-nav="bookings"><span class="nav-icon">&#9776;</span> Rezerwacje</a>
-    <a href="#calendar" data-nav="calendar"><span class="nav-icon">&#128197;</span> Kalendarz</a>
-    <a href="#pipeline" data-nav="pipeline"><span class="nav-icon">&#9776;</span> Pipeline</a>
-    <a href="#clients" data-nav="clients"><span class="nav-icon">&#128101;</span> Klienci</a>
-    <a href="#ai-config" data-nav="ai-config"><span class="nav-icon">&#129302;</span> AI Asystent</a>
-    <a href="#conversations" data-nav="conversations"><span class="nav-icon">&#128172;</span> Rozmowy</a>
-    <a href="#team" data-nav="team"><span class="nav-icon">&#128101;</span> Zespół</a>
-    <a href="#services" data-nav="services"><span class="nav-icon">&#127925;</span> Usługi</a>
-    <a href="#settings" data-nav="settings"><span class="nav-icon">&#9881;</span> Ustawienia</a>
+    <div class="nav-section">Puls</div>
+    <a href="#dashboard" data-nav="dashboard"><span class="nav-icon">📊</span> Pulpit</a>
+
+    <div class="nav-section">Rezerwacje</div>
+    <a href="#bookings" data-nav="bookings"><span class="nav-icon">📋</span> Rezerwacje</a>
+    <a href="#pipeline" data-nav="pipeline"><span class="nav-icon">🗂️</span> Tablica</a>
+    <a href="#calendar" data-nav="calendar"><span class="nav-icon">📅</span> Kalendarz</a>
+    <a href="#clients" data-nav="clients"><span class="nav-icon">👥</span> Klienci</a>
+
+    <div class="nav-section">Zespół</div>
+    <a href="#team" data-nav="team"><span class="nav-icon">👤</span> Zespół</a>
+    <a href="#services" data-nav="services"><span class="nav-icon">🎵</span> Usługi</a>
+
+    <div class="nav-section">Asystent AI</div>
+    <a href="#ai-config" data-nav="ai-config"><span class="nav-icon">🤖</span> Asystent AI</a>
+    <a href="#conversations" data-nav="conversations"><span class="nav-icon">💬</span> Rozmowy</a>
+
+    <div class="nav-section">Konfiguracja</div>
+    <a href="#settings" data-nav="settings"><span class="nav-icon">⚙️</span> Ustawienia</a>
   </nav>
   <div class="sidebar-footer">
     <span class="user-email" id="sidebar-user-email"></span>
