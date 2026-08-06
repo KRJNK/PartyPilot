@@ -47,6 +47,80 @@ export function navigate(hash) {
 }
 
 /**
+ * Rebuild sidebar based on current user role.
+ * Called after login to switch from staff→admin sidebar (or vice versa).
+ */
+export function rebuildSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+
+  const currentUser = auth.getUser();
+  const isOwner = currentUser && currentUser.role === 'owner';
+
+  if (isOwner) {
+    sidebar.innerHTML = `
+<div class="sidebar-logo">PartyPilot</div>
+<div class="sidebar-sub">Panel administracyjny</div>
+<nav class="sidebar-nav">
+  <div class="nav-section">Puls</div>
+  <a href="#dashboard" data-nav="dashboard"><span class="nav-icon">📊</span> Pulpit</a>
+
+  <div class="nav-section">Rezerwacje</div>
+  <a href="#bookings" data-nav="bookings"><span class="nav-icon">📋</span> Rezerwacje</a>
+  <a href="#pipeline" data-nav="pipeline"><span class="nav-icon">🗂️</span> Tablica</a>
+  <a href="#calendar" data-nav="calendar"><span class="nav-icon">📅</span> Kalendarz</a>
+  <a href="#clients" data-nav="clients"><span class="nav-icon">👥</span> Klienci</a>
+
+  <div class="nav-section">Zespół</div>
+  <a href="#team" data-nav="team"><span class="nav-icon">👤</span> Zespół</a>
+  <a href="#services" data-nav="services"><span class="nav-icon">🎵</span> Usługi</a>
+
+  <div class="nav-section">Asystent AI</div>
+  <a href="#ai-config" data-nav="ai-config"><span class="nav-icon">🤖</span> Asystent AI</a>
+  <a href="#conversations" data-nav="conversations"><span class="nav-icon">💬</span> Rozmowy</a>
+
+  <div class="nav-section">Konfiguracja</div>
+  <a href="#settings" data-nav="settings"><span class="nav-icon">⚙️</span> Ustawienia</a>
+</nav>
+<div class="sidebar-footer">
+  <span class="user-email" id="sidebar-user-email"></span>
+  <button class="logout-link" id="logout-btn">&#9654; Wyloguj</button>
+</div>
+    `;
+  } else {
+    sidebar.innerHTML = `
+<div class="sidebar-logo">PartyPilot</div>
+<div class="sidebar-sub">Portal pracownika</div>
+<nav class="sidebar-nav">
+  <div class="nav-section">Zlecenia</div>
+  <a href="#my-bookings" data-nav="my-bookings"><span class="nav-icon">📋</span> Moje zlecenia</a>
+  <div class="nav-section">Konto</div>
+  <a href="#my-profile" data-nav="my-profile"><span class="nav-icon">👤</span> Mój profil</a>
+</nav>
+<div class="sidebar-footer">
+  <span class="user-email" id="sidebar-user-email"></span>
+  <button class="logout-link" id="logout-btn">&#9654; Wyloguj</button>
+</div>
+    `;
+  }
+
+  // Re-attach event listeners
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      auth.logout();
+    });
+  }
+
+  // Update email display
+  const emailEl = document.getElementById('sidebar-user-email');
+  if (emailEl && currentUser) {
+    emailEl.textContent = currentUser.email || '';
+  }
+}
+
+/**
  * Match current hash against registered routes and invoke handler.
  */
 function handleRoute() {

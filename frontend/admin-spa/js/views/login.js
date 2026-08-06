@@ -1,7 +1,7 @@
 /* ── Login View ────────────────────────────────────────────── */
 
 import * as auth from '../auth.js';
-import { navigate } from '../app.js';
+import { navigate, rebuildSidebar } from '../app.js';
 
 /**
  * Render the login / register forms and attach event listeners.
@@ -107,7 +107,9 @@ export function renderLogin(app) {
 
     try {
       await auth.login(email, password);
-      navigate('#dashboard');
+      rebuildSidebar();
+      const user = auth.getUser();
+      navigate(user && user.role === 'owner' ? '#dashboard' : '#my-bookings');
     } catch (err) {
       errorEl.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       submitBtn.disabled = false;
@@ -146,6 +148,7 @@ export function renderLogin(app) {
 
     try {
       await auth.register(companyName, email, password);
+      rebuildSidebar();
       navigate('#dashboard');
     } catch (err) {
       errorEl.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
