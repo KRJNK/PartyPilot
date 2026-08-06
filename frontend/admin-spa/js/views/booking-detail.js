@@ -1201,3 +1201,29 @@ function formatPrice(val) {
   if (isNaN(n)) return String(val);
   return n.toFixed(2).replace(/\.00$/, '');
 }
+
+const WEEKDAYS = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
+
+function weekdayName(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    return WEEKDAYS[d.getDay()];
+  } catch (_) { return ''; }
+}
+
+function durationLabel(start, end) {
+  if (!start || !end) return '';
+  try {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    let mins = (eh * 60 + em) - (sh * 60 + sm);
+    if (mins <= 0) mins += 24 * 60;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return m + ' min';
+    if (m === 0) return h + ' h';
+    return h + ' h ' + m + ' min';
+  } catch (_) { return ''; }
+}
