@@ -290,6 +290,28 @@ const api = {
     return apiCall('DELETE', 'admin/bookings/' + encodeURIComponent(bookingId) + '/services/' + encodeURIComponent(serviceId));
   },
 
+  // Staff Portal (/api/my/*)
+  myBookings(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.status) params.set('status', filters.status);
+    if (filters.upcoming) params.set('upcoming', 'true');
+    const qs = params.toString();
+    const path = 'my/bookings' + (qs ? '?' + qs : '');
+    return apiCall('GET', path);
+  },
+
+  myBookingDetail(id) {
+    return apiCall('GET', 'my/bookings/' + encodeURIComponent(id));
+  },
+
+  myCheckIn(bookingId) {
+    return apiCall('POST', 'my/bookings/' + encodeURIComponent(bookingId) + '/check-in');
+  },
+
+  myProfile() {
+    return apiCall('GET', 'my/profile');
+  },
+
   // Tenant
   getTenant() {
     return apiCall('GET', 'admin/tenant');

@@ -15,6 +15,7 @@ import { renderConversations } from './views/conversations.js';
 import { renderConversationDetail } from './views/conversation-detail.js';
 import { renderTeam } from './views/team.js';
 import { renderServices } from './views/services.js';
+import { renderMyBookings, renderMyBookingDetail, renderMyProfile } from './views/my-bookings.js';
 
 /* ── State ────────────────────────────────────────────────── */
 const state = {
@@ -49,9 +50,19 @@ export function navigate(hash) {
  * Match current hash against registered routes and invoke handler.
  */
 function handleRoute() {
-  let hash = window.location.hash || '#dashboard';
+  const currentUser = auth.getUser();
+  const isOwner = currentUser && currentUser.role === 'owner';
+  const defaultHash = isOwner ? '#dashboard' : '#my-bookings';
+
+  let hash = window.location.hash || defaultHash;
   let fullPath = hash.replace(/^#/, '');
   let path = fullPath.split('?')[0];
+
+  // Redirect non-owners away from owner-only views (e.g. after login → #dashboard)
+  if (!isOwner && (path === 'dashboard' || path === '')) {
+    navigate('#my-bookings');
+    return;
+  }
 
   // Parse query params from hash
   const queryString = fullPath.split('?')[1] || '';
@@ -91,8 +102,8 @@ function handleRoute() {
   }
 
   if (!matched) {
-    // Default to dashboard
-    renderView('dashboard');
+    // Default to dashboard for owners, my-bookings for staff
+    renderView(isOwner ? 'dashboard' : 'my-bookings');
   }
 }
 
@@ -132,6 +143,9 @@ function renderView(viewName, ...params) {
     'ai-config': () => renderAIConfig(app),
     conversations: () => renderConversations(app, state.currentQuery),
     'conversation-detail': () => renderConversationDetail(app, ...params),
+    'my-bookings': () => renderMyBookings(app),
+    'my-booking-detail': () => renderMyBookingDetail(app, ...params),
+    'my-profile': () => renderMyProfile(app),
   };
 
   const renderFn = renderers[viewName];
@@ -200,6 +214,30 @@ function init() {
 
   htmlTo(root, shellHtml);
 
+  // Role-based sidebar: simplify for non-owner (staff) users
+  const currentUser = auth.getUser();
+  const isOwner = currentUser && currentUser.role === 'owner';
+  if (!isOwner) {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+      const staffNavHtml = `
+<div class="sidebar-logo">PartyPilot</div>
+<div class="sidebar-sub">Portal pracownika</div>
+<nav class="sidebar-nav">
+  <div class="nav-section">Zlecenia</div>
+  <a href="#my-bookings" data-nav="my-bookings"><span class="nav-icon">📋</span> Moje zlecenia</a>
+  <div class="nav-section">Konto</div>
+  <a href="#my-profile" data-nav="my-profile"><span class="nav-icon">👤</span> Mój profil</a>
+</nav>
+<div class="sidebar-footer">
+  <span class="user-email" id="sidebar-user-email"></span>
+  <button class="logout-link" id="logout-btn">&#9654; Wyloguj</button>
+</div>
+      `;
+      sidebar.innerHTML = staffNavHtml;
+    }
+  }
+
   // Hamburger toggle
   document.getElementById('hamburger').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
@@ -225,6 +263,9 @@ function init() {
   route('team', () => renderView('team'));
   route('services', () => renderView('services'));
   route('settings', () => renderView('settings'));
+  route('my-bookings', () => renderView('my-bookings'));
+  route('my-bookings/:id', (id) => renderView('my-booking-detail', id));
+  route('my-profile', () => renderView('my-profile'));
 
   // Listen for hash changes
   window.addEventListener('hashchange', handleRoute);

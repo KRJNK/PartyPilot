@@ -46,7 +46,7 @@ function renderDetail(app, b) {
   // Status history timeline
   let historyHtml = '';
   if (b.status_history && b.status_history.length) {
-    historyHtml = '<h3 style="font-size:0.95rem;font-weight:500;margin:1.5rem 0 0.75rem;">Historia statusów</h3><div class="timeline">';
+    historyHtml = '<div class="timeline">';
     const history = Array.isArray(b.status_history) ? b.status_history.slice().reverse() : [];
     for (const h of history) {
       historyHtml += `<div class="timeline-item">
@@ -58,23 +58,27 @@ function renderDetail(app, b) {
     historyHtml += '</div>';
   }
 
-  // Action buttons
-  let actionsHtml = '';
+  // Action buttons — grouped: primary vs danger
+  let primaryActions = '';
+  let dangerActions = '';
   if (canMarkDeposit) {
-    actionsHtml += `<button class="btn btn-primary btn-sm" id="act-deposit">&#10003; Oznacz zaliczkę jako opłaconą</button> `;
+    primaryActions += `<button class="btn btn-primary btn-sm" id="act-deposit">&#10003; Oznacz zaliczkę jako opłaconą</button> `;
   }
   if (canEdit) {
-    actionsHtml += `<button class="btn btn-secondary btn-sm" id="act-toggle-edit">&#9998; Edytuj</button> `;
+    primaryActions += `<button class="btn btn-secondary btn-sm" id="act-toggle-edit">&#9998; Edytuj</button> `;
   }
   if (canCancel) {
-    actionsHtml += `<button class="btn btn-danger btn-sm" id="act-cancel">&#10005; Anuluj rezerwację</button> `;
+    dangerActions += `<button class="btn btn-danger btn-sm" id="act-cancel">&#10005; Anuluj rezerwację</button> `;
   }
   if (canDelete) {
-    actionsHtml += `<button class="btn btn-danger btn-sm" id="act-delete">&#128465; Usuń trwale</button>`;
+    dangerActions += `<button class="btn btn-danger btn-sm" id="act-delete">&#128465; Usuń trwale</button>`;
   }
-  if (b.status === 'deposit_paid') {
-    actionsHtml += ` <span class="badge badge-deposit_paid">Zaliczka opłacona</span>`;
-  }
+
+  let actionsHtml = `<div class="action-bar" id="detail-actions">`;
+  if (primaryActions) actionsHtml += `<div class="action-group">${primaryActions}</div>`;
+  if (dangerActions) actionsHtml += `<div class="action-group action-group-danger">${dangerActions}</div>`;
+  if (b.status === 'deposit_paid') actionsHtml += ` <span class="badge badge-deposit_paid">Zaliczka opłacona</span>`;
+  actionsHtml += `</div>`;
 
   const hasDeposit = b.deposit_amount && parseFloat(b.deposit_amount) > 0;
 
@@ -107,72 +111,141 @@ function renderDetail(app, b) {
     '</div>';
   }
 
+  // ── Hero data ──
+  const eventDate = formatDate(b.event_date);
+  const weekday = weekdayName(b.event_date);
+  const timeRange = (b.event_time_start || b.event_time_end)
+    ? (escapeHtml(b.event_time_start || '—') + ' &ndash; ' + escapeHtml(b.event_time_end || '—'))
+    : '—';
+  const duration = durationLabel(b.event_time_start, b.event_time_end);
+  const packageName = escapeHtml(b.package_name || b.package_id || '—');
+  const packagePriceRaw = b.package_price || b.package_final_price || '';
+  const packagePrice = packagePriceRaw ? (escapeHtml(packagePriceRaw) + ' zł') : '—';
+  const guestCount = b.guest_count || null;
+
+  // Location split: try to separate venue name from address
+  let locationMain = escapeHtml(b.event_location || '—');
+  let locationSub = '';
+  if (b.event_location && b.event_location.includes(',')) {
+    const parts = b.event_location.split(',');
+    locationMain = escapeHtml(parts[0].trim());
+    locationSub = escapeHtml(parts.slice(1).join(',').trim());
+  }
+
+  // Contact links
+  const emailHtml = b.client_email
+    ? `<a href="mailto:${escapeHtml(b.client_email)}" class="booking-contact-link">${escapeHtml(b.client_email)}</a>`
+    : '<span class="text-faint">—</span>';
+  const phoneHtml = b.client_phone
+    ? `<a href="tel:${escapeHtml(b.client_phone)}" class="booking-contact-link">${escapeHtml(b.client_phone)}</a>`
+    : '<span class="text-faint">—</span>';
+
   app.innerHTML = `
 <div class="page-header">
   <div>
-    <h1><a href="#bookings" style="color:var(--text-muted);font-size:0.75rem;font-weight:300;">&#8592; Rezerwacje</a> / ${escapeHtml(b.client_name)}</h1>
+    <a href="#bookings" class="back-link">&#8592; Rezerwacje</a>
+    <h1>${escapeHtml(b.client_name)}</h1>
     <div class="subtitle">${escapeHtml(b.id)} &middot; <span class="badge badge-${escapeHtml(b.status || 'inquiry')}">${escapeHtml(STATUS_LABELS[b.status] || b.status)}</span></div>
   </div>
 </div>
 
-<div class="action-bar" id="detail-actions">${actionsHtml}</div>
+${actionsHtml}
 <div id="detail-action-result"></div>
 
 <div class="card" id="detail-card">
-  <div class="detail-grid" id="detail-grid-view">
-    <div><div class="detail-field"><div class="detail-label">ID</div><div class="detail-value" style="font-family:monospace;">${escapeHtml(b.id)}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Typ klienta</div><div class="detail-value">${escapeHtml(clientTypeLabel(b.client_type))}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Klient</div><div class="detail-value">${escapeHtml(b.client_name)}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">${escapeHtml(b.client_email || '—')}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Telefon</div><div class="detail-value">${escapeHtml(b.client_phone || '—')}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Data wydarzenia</div><div class="detail-value">${escapeHtml(formatDate(b.event_date))}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Godzina</div><div class="detail-value">${escapeHtml(b.event_time_start || '—')} &ndash; ${escapeHtml(b.event_time_end || '—')}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Miejsce</div><div class="detail-value">${escapeHtml(b.event_location || '—')}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Liczba gości</div><div class="detail-value">${b.guest_count || '—'}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Pakiet</div><div class="detail-value">${escapeHtml(b.package_name || b.package_id || '—')}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Cena pakietu</div><div class="detail-value">${escapeHtml(b.package_price || b.package_final_price || '—')}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Zaliczka</div><div class="detail-value">${depositStatus}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Utworzono</div><div class="detail-value">${escapeHtml(formatTimestamp(b.created_at))}</div></div></div>
-    <div><div class="detail-field"><div class="detail-label">Aktualizacja</div><div class="detail-value">${escapeHtml(formatTimestamp(b.updated_at))}</div></div></div>
+  <div id="detail-grid-view">
+    <div class="booking-hero">
+      <div class="booking-hero-keyinfo">
+        <div class="booking-hero-date">
+          <span class="booking-hero-icon">&#128197;</span>
+          <div>
+            <div class="booking-hero-primary">${eventDate}</div>
+            <div class="booking-hero-secondary">${weekday ? escapeHtml(weekday) : ''}</div>
+          </div>
+        </div>
+        <div class="booking-hero-time">
+          <span class="booking-hero-icon">&#128336;</span>
+          <div>
+            <div class="booking-hero-primary">${timeRange}</div>
+            <div class="booking-hero-secondary">${duration ? escapeHtml(duration) : ''}</div>
+          </div>
+        </div>
+        <div class="booking-hero-location">
+          <span class="booking-hero-icon">&#128205;</span>
+          <div>
+            <div class="booking-hero-primary">${locationMain}</div>
+            ${locationSub ? '<div class="booking-hero-secondary">' + locationSub + '</div>' : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="booking-hero-financials">
+        <div class="booking-hero-fin">
+          <span class="booking-hero-fin-label">Pakiet</span>
+          <span class="booking-hero-fin-value">${packageName}</span>
+        </div>
+        <div class="booking-hero-fin">
+          <span class="booking-hero-fin-label">Cena pakietu</span>
+          <span class="booking-hero-fin-value">${packagePrice}</span>
+        </div>
+        <div class="booking-hero-fin">
+          <span class="booking-hero-fin-label">Zaliczka</span>
+          <span class="booking-hero-fin-value">${depositStatus}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="booking-contact-card">
+      <div class="booking-contact-item">
+        <span class="booking-contact-icon">&#9993;</span>
+        ${emailHtml}
+      </div>
+      <div class="booking-contact-item">
+        <span class="booking-contact-icon">&#128222;</span>
+        ${phoneHtml}
+      </div>
+      ${guestCount ? `<div class="booking-contact-item"><span class="booking-contact-icon">&#128101;</span> <span>${guestCount} go&#347;ci</span></div>` : ''}
+    </div>
   </div>
 
   ${contractHtml}
 
   <!-- Assigned Staff Section -->
-  <div class="card assignments-section" style="margin-top:1.5rem;">
-    <div class="card-header">&#128101; Przypisany personel</div>
-    <div id="assignments-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  <div class="card booking-section-card" style="margin-top:1.5rem;">
+    <div class="card-header"><span class="card-header-icon">&#128101;</span> Zesp&#243;&#322;</div>
+    <div id="assignments-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> &#321;adowanie...</div></div>
   </div>
 
   <!-- Files Section -->
-  <div class="card files-section" style="margin-top:1.5rem;">
-    <div class="card-header">&#128206; Pliki</div>
-    <div id="files-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  <div class="card booking-section-card" style="margin-top:1.5rem;">
+    <div class="card-header"><span class="card-header-icon">&#128193;</span> Pliki</div>
+    <div id="files-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> &#321;adowanie...</div></div>
   </div>
 
   <!-- Location Section -->
-  <div class="card" style="margin-top:1.5rem;">
-    <div class="card-header">&#128205; Lokalizacja wydarzenia</div>
-    <div id="location-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  <div class="card booking-section-card" style="margin-top:1.5rem;">
+    <div class="card-header"><span class="card-header-icon">&#128205;</span> Lokalizacja wydarzenia</div>
+    <div id="location-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> &#321;adowanie...</div></div>
   </div>
 
   <!-- Services (add-ons) Section -->
-  <div class="card" style="margin-top:1.5rem;">
-    <div class="card-header">&#127925; Usługi dodatkowe</div>
-    <div id="booking-services-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> Ładowanie...</div></div>
+  <div class="card booking-section-card" style="margin-top:1.5rem;">
+    <div class="card-header"><span class="card-header-icon">&#127925;</span> Us&#322;ugi dodatkowe</div>
+    <div id="booking-services-content"><div class="loading" style="padding:1rem 0;"><div class="spinner" style="display:inline-block;"></div> &#321;adowanie...</div></div>
   </div>
 
   <!-- Edit form (hidden by default) -->
   <div id="detail-form-edit" style="display:none;"></div>
 
   <!-- Internal notes -->
-  <div style="margin-top:1.5rem;">
-    <div class="detail-label" style="margin-bottom:0.3rem;">Notatki wewnętrzne</div>
+  <div class="card booking-section-card" style="margin-top:1.5rem;">
+    <div class="card-header"><span class="card-header-icon">&#9999;&#65039;</span> Notatki wewn&#281;trzne</div>
     <div id="notes-view" style="white-space:pre-wrap;font-size:0.88rem;">${escapeHtml(b.internal_notes || '—')}</div>
     <textarea class="inline-edit-area" id="notes-edit" style="display:none;">${escapeHtml(b.internal_notes || '')}</textarea>
   </div>
 
-  ${historyHtml}
+  <!-- Status history -->
+  ${historyHtml ? '<div class="card booking-section-card" style="margin-top:1.5rem;"><div class="card-header"><span class="card-header-icon">&#128220;</span> Historia status&#243;w</div>' + historyHtml + '</div>' : ''}
 </div>
   `;
 

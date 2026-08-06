@@ -92,6 +92,10 @@ ADMIN_USERS_RE = re.compile(
     r"^/api/admin/users(?:/([^/]+))?(?:/(location))?$"
 )
 
+# ── Staff Portal (my) ──
+MY_BOOKINGS_RE = re.compile(r"^/api/my/bookings(?:/([^/]+))?(?:/(check-in))?$")
+MY_PROFILE_RE = re.compile(r"^/api/my/profile$")
+
 
 # ── Entry point ────────────────────────────────────────────────
 
@@ -173,6 +177,49 @@ def _route(event, context):
     if path == "/api/auth/me" and method == "GET":
         from auth import handle_me
         return _require_cors(handle_me(event), cors)
+
+    # ── Staff Portal (requires JWT) ───────────────────────
+    m_my_profile = MY_PROFILE_RE.match(path)
+    m_my_bookings = MY_BOOKINGS_RE.match(path)
+    if m_my_profile or m_my_bookings:
+        user_info = _authenticate(event)
+        if user_info is None:
+            return _require_cors(
+                _response(401, {"error": "Unauthorized"}), cors
+            )
+
+        # GET /api/my/profile
+        if m_my_profile and method == "GET":
+            from my import handle_my_profile
+            return _require_cors(handle_my_profile(user_info), cors)
+
+        # /api/my/bookings[/{booking_id}[/check-in]]
+        if m_my_bookings:
+            booking_id = m_my_bookings.group(1)
+            action = m_my_bookings.group(2)
+            from my import (
+                handle_my_bookings,
+                handle_my_booking_detail,
+                handle_my_check_in,
+            )
+
+            # GET /api/my/bookings
+            if not booking_id and method == "GET":
+                return _require_cors(
+                    handle_my_bookings(user_info, event), cors
+                )
+            # POST /api/my/bookings/{booking_id}/check-in
+            if booking_id and action == "check-in" and method == "POST":
+                return _require_cors(
+                    handle_my_check_in(user_info, booking_id), cors
+                )
+            # GET /api/my/bookings/{booking_id}
+            if booking_id and not action and method == "GET":
+                return _require_cors(
+                    handle_my_booking_detail(user_info, booking_id), cors
+                )
+
+            return _require_cors(_response(404, {"error": "Not found"}), cors)
 
     # ── Admin routes (require JWT) ────────────────────────
     user_info = _authenticate(event)
