@@ -56,9 +56,6 @@ jobs:
 
       - name: Terraform Validate
         run: cd terraform && terraform validate
-
-      - name: Terraform Plan
-        run: cd terraform && terraform plan -no-color
         env:
           TF_VAR_scw_access_key: ${{ secrets.SCW_ACCESS_KEY }}
           TF_VAR_scw_secret_key: ${{ secrets.SCW_SECRET_KEY }}
@@ -67,3 +64,31 @@ jobs:
           TF_VAR_mistral_api_key: ${{ secrets.MISTRAL_API_KEY }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+
+      - name: Terraform Plan
+        run: cd terraform && terraform plan -no-color -lock=false
+        env:
+          TF_VAR_scw_access_key: ${{ secrets.SCW_ACCESS_KEY }}
+          TF_VAR_scw_secret_key: ${{ secrets.SCW_SECRET_KEY }}
+          TF_VAR_smtp_username: ${{ secrets.SMTP_USERNAME }}
+          TF_VAR_smtp_password: ${{ secrets.SMTP_PASSWORD }}
+          TF_VAR_mistral_api_key: ${{ secrets.MISTRAL_API_KEY }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+
+      - name: Comment PR with plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Plan ✅
+            \`\`\`
+            Plan generated successfully. See workflow run for details.
+            \`\`\`
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
