@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "api"))
 def handle_d21_reminders(event, context):
     """Entry point for scheduled D-21 reminder."""
     from db import execute, query
-    from email import send_email
+    from mailer import send_email
     from datetime import date, timedelta
 
     target_date = date.today() + timedelta(days=21)
@@ -53,7 +53,7 @@ def handle_d21_reminders(event, context):
 
 def send_d21_reminder(booking):
     """Send D-21 reminder email to client."""
-    from email import send_email
+    from mailer import send_email
 
     subject = (
         f"Przypomnienie: Twoje wydarzenie za 21 dni — {booking['event_date']}"

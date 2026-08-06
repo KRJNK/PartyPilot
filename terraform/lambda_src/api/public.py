@@ -180,8 +180,8 @@ def handle_public_availability(tenant_id, event=None):
                       event_time_end, event_location
                FROM bookings
                WHERE tenant_id = %s
-                 AND status NOT IN ('cancelled')
-                 AND EXTRACT(YEAR FROM event_date) = %s
+                 AND status IN ('confirmed', 'deposit_paid')
+                  AND EXTRACT(YEAR FROM event_date) = %s
                  AND EXTRACT(MONTH FROM event_date) = %s
                ORDER BY event_date""",
             (tenant_id, year_num, month_num),

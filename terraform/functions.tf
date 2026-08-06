@@ -46,6 +46,7 @@ resource "scaleway_function" "api" {
     SMTP_PORT       = "587"
     SMTP_USER       = var.smtp_username
     SMTP_PASS       = var.smtp_password
+    SMTP_FROM       = var.smtp_from
     STORAGE_BUCKET  = scaleway_object_bucket.storage.name
     SCW_REGION      = "pl-waw-1"
     MISTRAL_API_KEY = var.mistral_api_key

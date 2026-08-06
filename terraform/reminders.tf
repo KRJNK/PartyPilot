@@ -4,7 +4,7 @@
 
 data "archive_file" "reminders_source" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda_src/reminders"
+  source_dir  = "${path.module}/lambda_src"
   output_path = "${path.module}/.build/reminders.zip"
 }
 
@@ -44,6 +44,7 @@ resource "scaleway_function" "d21_reminder" {
     SMTP_PORT    = "587"
     SMTP_USER    = var.smtp_username
     SMTP_PASS    = var.smtp_password
+    SMTP_FROM    = var.smtp_from
     SCW_REGION   = "pl-waw-1"
   }
 

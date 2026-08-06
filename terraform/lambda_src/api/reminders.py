@@ -54,15 +54,18 @@ def handle_d21_reminders(event):
 
         try:
             # Wyślij e-mail
-            _send_reminder_email(row)
-            # Oznacz jako wysłany
-            now = datetime.now(timezone.utc)
-            execute(
-                "UPDATE bookings SET reminder_21_sent = TRUE, updated_at = %s WHERE id = %s",
-                (now, booking_id),
-            )
-            reminders_sent += 1
-            logging.info("D-21: reminder wysłany do %s (booking %s)", client_email, booking_id)
+            if _send_reminder_email(row):
+                # Oznacz jako wysłany tylko gdy email faktycznie poszedł
+                now = datetime.now(timezone.utc)
+                execute(
+                    "UPDATE bookings SET reminder_21_sent = TRUE, updated_at = %s WHERE id = %s",
+                    (now, booking_id),
+                )
+                reminders_sent += 1
+                logging.info("D-21: reminder wysłany do %s (booking %s)", client_email, booking_id)
+            else:
+                errors += 1
+                logging.error("D-21: nie udało się wysłać remindera do %s (booking %s)", client_email, booking_id)
         except Exception as e:
             errors += 1
             logging.error("D-21: błąd dla booking %s: %s", booking_id, e)
@@ -159,4 +162,4 @@ def _send_reminder_email(booking):
     )
 
     subject = f"Przypomnienie – {date_formatted} | {company_name}"
-    send_email(client_email, subject, html, text_body=text)
+    return send_email(client_email, subject, html, text_body=text)

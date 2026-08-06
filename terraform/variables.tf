@@ -62,6 +62,12 @@ variable "smtp_password" {
   default     = ""
 }
 
+variable "smtp_from" {
+  description = "Sender email address for outbound emails"
+  type        = string
+  default     = "noreply@weddingsaas.pl"
+}
+
 variable "mistral_api_key" {
   description = "Mistral AI API key for chat assistant"
   type        = string

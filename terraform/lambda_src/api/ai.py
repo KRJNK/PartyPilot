@@ -199,7 +199,7 @@ def handle_chat(tenant_id, event):
         )
 
         # 11. Sprawdź kwalifikację leada
-        lead_qualified, client_name, client_email, client_phone = (
+        lead_qualified, client_name, client_email, client_phone, client_date = (
             _check_lead_qualification(conversation_id, cur)
         )
 
@@ -216,7 +216,7 @@ def handle_chat(tenant_id, event):
             if ai_config.get("auto_create_booking", True):
                 _create_booking_from_lead(
                     conn, cur, tenant_id, conversation_id, client_name,
-                    client_email, client_phone,
+                    client_email, client_phone, client_date,
                 )
 
             # Wyślij escalation email do vendora
@@ -339,8 +339,11 @@ def handle_list_conversations(tenant_id, event):
     """
     params = _get_query_params(event)
     status = (params.get("status") or "").strip()
-    page = int(params.get("page", "1"))
-    limit = int(params.get("limit", "20"))
+    try:
+        page = int(params.get("page", "1"))
+        limit = int(params.get("limit", "20"))
+    except (ValueError, TypeError):
+        return _resp(400, {"error": "Invalid page or limit parameter"})
     if limit > 100:
         limit = 100
     offset = (page - 1) * limit
@@ -505,7 +508,7 @@ def _check_lead_qualification(conversation_id, cur):
     name = _extract_name(all_text)
 
     qualified = bool(email and phone and date)
-    return qualified, name, email, phone
+    return qualified, name, email, phone, date
 
 
 def _extract_email(text):
@@ -547,13 +550,35 @@ def _extract_name(text):
 # ══════════════════════════════════════════════════
 
 
+def _normalize_event_date(date_str):
+    """
+    Normalizuje datę do formatu YYYY-MM-DD.
+    Obsługuje formaty: YYYY-MM-DD oraz DD.MM.YYYY.
+    Zwraca None jeśli data jest pusta lub nieprawidłowa.
+    """
+    if not date_str:
+        return None
+    for fmt in ("%Y-%m-%d", "%d.%m.%Y"):
+        try:
+            return datetime.strptime(date_str, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    return None
+
+
 def _create_booking_from_lead(conn, cur, tenant_id, conversation_id,
-                               client_name, client_email, client_phone):
+                               client_name, client_email, client_phone,
+                               event_date=""):
     """
     Tworzy booking ze statusem 'inquiry' i source='ai_qualified'.
     """
     booking_id = next_booking_id(tenant_id)
     now = datetime.now(timezone.utc)
+
+    # Użyj daty wyekstrahowanej z rozmowy, jeśli poprawna, inaczej fallback
+    resolved_date = _normalize_event_date(event_date)
+    if not resolved_date:
+        resolved_date = (now + timedelta(days=365)).strftime("%Y-%m-%d")
 
     cur.execute(
         """INSERT INTO bookings (
@@ -569,7 +594,7 @@ def _create_booking_from_lead(conn, cur, tenant_id, conversation_id,
             client_name or "Lead AI",
             client_email or "",
             client_phone or "",
-            (now + timedelta(days=365)).strftime("%Y-%m-%d"),
+            resolved_date,
             now,
             now,
         ),
