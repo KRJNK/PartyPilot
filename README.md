@@ -34,6 +34,10 @@ wedding-saas/
 └── docs/                     # Dokumentacja
 ```
 
+## Kierunek produktu
+
+Eksploracyjny brief dla koncepcji **Wolny Deck**: [docs/wolny-deck-product-brief.md](docs/wolny-deck-product-brief.md). To nie jest decyzja o zmianie nazwy ani zakresu PartyPilot.
+
 ## Fazy
 
 - **Faza 0 (teraz):** Fundament — Terraform, DynamoDB, Cognito, API Gateway, Lambda skeleton, admin SPA skeleton
